@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/context_extensions.dart';
 import '../models/medicine.dart';
 import '../models/user_type.dart';
+import '../widgets/dashboard_action_bar.dart';
 import '../widgets/language_toggle.dart';
 import '../widgets/medicine_form_sheet.dart';
 import '../widgets/medicine_tile.dart';
@@ -10,6 +11,7 @@ import '../widgets/profile_avatar.dart';
 import '../widgets/section_card.dart';
 import '../widgets/theme_toggle_button.dart';
 import 'community_map_screen.dart';
+import 'medicine_detail_screen.dart';
 import 'profile_screen.dart';
 import 'my_medicines_screen.dart';
 import 'pharmacy_requests_screen.dart';
@@ -24,42 +26,7 @@ class PharmacyDashboardScreen extends StatelessWidget {
     final owned = appState.medicinesByPharmacy(appState.primaryPharmacyId);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.t('pharmacy_dashboard_title')),
-        actions: [
-          const LanguageToggle(dense: true),
-          const ThemeToggleButton(),
-          IconButton(
-            tooltip: l10n.t('map_cta'),
-            icon: const Icon(Icons.public_rounded),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const CommunityMapScreen()),
-            ),
-          ),
-          IconButton(
-            tooltip: l10n.t('my_medicines_title'),
-            icon: const Icon(Icons.inventory_2_rounded),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const MyMedicinesScreen()),
-            ),
-          ),
-          IconButton(
-            tooltip: l10n.t('profile_picture'),
-            iconSize: 40,
-            icon: ProfileAvatar(
-              path: appState.pharmacyProfile.avatarPath,
-              useAsset: appState.pharmacyProfile.useAsset,
-              radius: 20,
-            ),
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) =>
-                    const ProfileScreen(userType: UserType.pharmacy),
-              ),
-            ),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(l10n.t('pharmacy_dashboard_title'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openMedicineSheet(context),
         icon: const Icon(Icons.add),
@@ -72,6 +39,7 @@ class PharmacyDashboardScreen extends StatelessWidget {
           _DashboardStats(
             ownedMedicines: owned,
             onOpenRequests: () => _openRequestsScreen(context),
+            onOpenManagedMeds: () => _openMyMedicinesScreen(context),
           ),
           const SizedBox(height: 24),
           SectionCard(
@@ -84,9 +52,34 @@ class PharmacyDashboardScreen extends StatelessWidget {
                     (medicine) => MedicineTile(
                       medicine: medicine,
                       pharmacy: appState.pharmacyById(medicine.pharmacyId),
+                      onTap: () => _openMedicineDetails(context, medicine),
                     ),
                   )
                   .toList(),
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: DashboardActionBar(
+        children: [
+          const LanguageToggle(dense: true),
+          const ThemeToggleButton(),
+          IconButton(
+            tooltip: l10n.t('map_cta'),
+            icon: const Icon(Icons.public_rounded),
+            onPressed: () => _openCommunityMap(context),
+          ),
+          IconButton(
+            tooltip: l10n.t('my_medicines_title'),
+            icon: const Icon(Icons.inventory_2_rounded),
+            onPressed: () => _openMyMedicinesScreen(context),
+          ),
+          InkWell(
+            onTap: () => _openProfile(context),
+            child: ProfileAvatar(
+              path: appState.pharmacyProfile.avatarPath,
+              useAsset: appState.pharmacyProfile.useAsset,
+              radius: 20,
             ),
           ),
         ],
@@ -128,9 +121,41 @@ class PharmacyDashboardScreen extends StatelessWidget {
   }
 
   void _openRequestsScreen(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const PharmacyRequestsScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PharmacyRequestsScreen()),
+    );
+  }
+
+  void _openMyMedicinesScreen(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MyMedicinesScreen()),
+    );
+  }
+
+  void _openCommunityMap(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const CommunityMapScreen()),
+    );
+  }
+
+  void _openProfile(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const ProfileScreen(userType: UserType.pharmacy),
+      ),
+    );
+  }
+
+  void _openMedicineDetails(BuildContext context, Medicine medicine) {
+    final appState = context.appState;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MedicineDetailScreen(
+          medicine: medicine,
+          pharmacy: appState.pharmacyById(medicine.pharmacyId),
+        ),
+      ),
+    );
   }
 }
 
@@ -138,10 +163,12 @@ class _DashboardStats extends StatelessWidget {
   const _DashboardStats({
     required this.ownedMedicines,
     required this.onOpenRequests,
+    required this.onOpenManagedMeds,
   });
 
   final List<Medicine> ownedMedicines;
   final VoidCallback onOpenRequests;
+  final VoidCallback onOpenManagedMeds;
 
   @override
   Widget build(BuildContext context) {
@@ -155,6 +182,7 @@ class _DashboardStats extends StatelessWidget {
         gradient: const LinearGradient(
           colors: [Color(0xFF4F46E5), Color(0xFF6EE7B7)],
         ),
+        onTap: onOpenManagedMeds,
       ),
       _StatTile(
         icon: Icons.message_rounded,

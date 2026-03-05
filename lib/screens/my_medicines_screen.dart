@@ -6,6 +6,7 @@ import '../widgets/language_toggle.dart';
 import '../widgets/medicine_form_sheet.dart';
 import '../widgets/medicine_tile.dart';
 import '../widgets/theme_toggle_button.dart';
+import 'medicine_detail_screen.dart';
 
 class MyMedicinesScreen extends StatelessWidget {
   const MyMedicinesScreen({super.key});
@@ -35,6 +36,7 @@ class MyMedicinesScreen extends StatelessWidget {
                     (medicine) => MedicineTile(
                       medicine: medicine,
                       pharmacy: appState.primaryPharmacy,
+                      onTap: () => _openDetails(context, medicine),
                       trailingActions: MedicineTileActions(
                         onEdit: () =>
                             _openMedicineSheet(context, medicine: medicine),
@@ -78,6 +80,18 @@ class MyMedicinesScreen extends StatelessWidget {
               ).showSnackBar(SnackBar(content: Text(l10n.t('med_updated'))));
             }
           },
+        ),
+      ),
+    );
+  }
+
+  void _openDetails(BuildContext context, Medicine medicine) {
+    final appState = context.appState;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => MedicineDetailScreen(
+          medicine: medicine,
+          pharmacy: appState.primaryPharmacy,
         ),
       ),
     );
