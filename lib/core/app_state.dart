@@ -91,8 +91,8 @@ class AppState extends ChangeNotifier {
     email: 'hello@auroracare.cm',
     phone: '+237 699 123 456',
     bio: 'Precision-led pharmacy with coastal delivery.',
-    avatarUrl:
-        'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=80',
+    avatarPath: 'assets/avatars/avatar_wave.svg',
+    useAsset: true,
   );
 
   UserProfile _patientProfile = const UserProfile(
@@ -100,8 +100,8 @@ class AppState extends ChangeNotifier {
     email: 'patient@drugspot.app',
     phone: '+237 680 777 001',
     bio: 'Actively tracking stock for chronic care.',
-    avatarUrl:
-        'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=600&q=80',
+    avatarPath: 'assets/avatars/avatar_mint.svg',
+    useAsset: true,
   );
 
   ThemeMode get themeMode => _themeMode;

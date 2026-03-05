@@ -6,6 +6,7 @@ import '../models/pharmacy.dart';
 import '../models/user_type.dart';
 import '../widgets/language_toggle.dart';
 import '../widgets/medicine_tile.dart';
+import '../widgets/profile_avatar.dart';
 import '../widgets/section_card.dart';
 import '../widgets/theme_toggle_button.dart';
 import 'profile_screen.dart';
@@ -79,8 +80,10 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
           IconButton(
             tooltip: l10n.t('profile_picture'),
             iconSize: 40,
-            icon: CircleAvatar(
-              backgroundImage: NetworkImage(appState.patientProfile.avatarUrl),
+            icon: ProfileAvatar(
+              path: appState.patientProfile.avatarPath,
+              useAsset: appState.patientProfile.useAsset,
+              radius: 20,
             ),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(

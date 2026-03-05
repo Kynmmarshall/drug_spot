@@ -67,15 +67,25 @@ class MedicineTile extends StatelessWidget {
                       color: theme.colorScheme.primary,
                     ),
                     const SizedBox(width: 4),
-                    Text(l10n.priceLabel(medicine.price)),
-                    const SizedBox(width: 16),
+                    Flexible(
+                      child: Text(
+                        l10n.priceLabel(medicine.price),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
                     Icon(
                       Icons.location_pin,
                       size: 18,
                       color: theme.colorScheme.primary,
                     ),
                     const SizedBox(width: 4),
-                    Text(l10n.distanceAway(medicine.distanceKm)),
+                    Flexible(
+                      child: Text(
+                        l10n.distanceAway(medicine.distanceKm),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                   ],
                 ),
               ],

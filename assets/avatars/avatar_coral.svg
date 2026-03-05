@@ -1,0 +1,14 @@
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="coralGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F78DA7" />
+      <stop offset="100%" stop-color="#F47C3C" />
+    </linearGradient>
+  </defs>
+  <rect width="200" height="200" rx="60" fill="url(#coralGradient)" />
+  <circle cx="100" cy="80" r="44" fill="rgba(255, 255, 255, 0.85)" />
+  <circle cx="70" cy="78" r="6" fill="#F47C3C" />
+  <circle cx="130" cy="78" r="6" fill="#F47C3C" />
+  <path d="M70 120C82 136 118 136 130 120" stroke="#F47C3C" stroke-width="10" stroke-linecap="round" fill="none" />
+  <path d="M50 160C66 133 88 120 100 120C112 120 134 133 150 160" stroke="rgba(255,255,255,0.95)" stroke-width="16" stroke-linecap="round" fill="none" />
+</svg>

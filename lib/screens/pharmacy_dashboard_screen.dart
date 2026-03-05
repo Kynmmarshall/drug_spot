@@ -7,6 +7,7 @@ import '../widgets/language_toggle.dart';
 import '../widgets/medicine_form_sheet.dart';
 import '../widgets/medicine_tile.dart';
 import '../widgets/pharmacy_map_card.dart';
+import '../widgets/profile_avatar.dart';
 import '../widgets/section_card.dart';
 import '../widgets/theme_toggle_button.dart';
 import 'profile_screen.dart';
@@ -29,8 +30,10 @@ class PharmacyDashboardScreen extends StatelessWidget {
           IconButton(
             tooltip: l10n.t('profile_picture'),
             iconSize: 40,
-            icon: CircleAvatar(
-              backgroundImage: NetworkImage(appState.pharmacyProfile.avatarUrl),
+            icon: ProfileAvatar(
+              path: appState.pharmacyProfile.avatarPath,
+              useAsset: appState.pharmacyProfile.useAsset,
+              radius: 20,
             ),
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(

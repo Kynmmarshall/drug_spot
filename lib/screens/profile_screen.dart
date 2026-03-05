@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/context_extensions.dart';
 import '../models/user_profile.dart';
 import '../models/user_type.dart';
+import '../widgets/profile_avatar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.userType});
@@ -18,29 +19,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
   late final TextEditingController _bioController;
-  late String _avatarUrl;
 
-  final _avatarOptions = const [
-    'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=400&q=80',
-    'https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?auto=format&fit=crop&w=400&q=80',
-    'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=400&q=80',
-    'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=400&q=80',
+  late UserProfile _baseProfile;
+  late String _avatarPath;
+  bool _useAsset = true;
+  bool _initialized = false;
+
+  static const List<String> _avatarOptions = [
+    'assets/avatars/avatar_wave.svg',
+    'assets/avatars/avatar_coral.svg',
+    'assets/avatars/avatar_mint.svg',
+    'assets/avatars/avatar_sunrise.svg',
   ];
 
   @override
   void initState() {
     super.initState();
-    final profile = _currentProfile;
-    _usernameController = TextEditingController(text: profile.username);
-    _emailController = TextEditingController(text: profile.email);
-    _phoneController = TextEditingController(text: profile.phone);
-    _bioController = TextEditingController(text: profile.bio);
-    _avatarUrl = profile.avatarUrl;
+    _usernameController = TextEditingController();
+    _emailController = TextEditingController();
+    _phoneController = TextEditingController();
+    _bioController = TextEditingController();
   }
 
-  UserProfile get _currentProfile => widget.userType == UserType.pharmacy
-      ? context.appState.pharmacyProfile
-      : context.appState.patientProfile;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialized) return;
+    _baseProfile = widget.userType == UserType.pharmacy
+        ? context.appState.pharmacyProfile
+        : context.appState.patientProfile;
+    _usernameController.text = _baseProfile.username;
+    _emailController.text = _baseProfile.email;
+    _phoneController.text = _baseProfile.phone;
+    _bioController.text = _baseProfile.bio;
+    _avatarPath = _baseProfile.avatarPath;
+    _useAsset = _baseProfile.useAsset;
+    _initialized = true;
+  }
 
   @override
   void dispose() {
@@ -80,24 +95,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           const SizedBox(height: 24),
           Center(
-            child: CircleAvatar(
-              radius: 48,
-              backgroundImage: NetworkImage(_avatarUrl),
+            child: ProfileAvatar(
+              path: _avatarPath,
+              useAsset: _useAsset,
+              radius: 52,
+              backgroundColor: theme.colorScheme.surfaceVariant,
             ),
           ),
           const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            children: _avatarOptions
-                .map(
-                  (url) => ChoiceChip(
-                    avatar: CircleAvatar(backgroundImage: NetworkImage(url)),
-                    label: const SizedBox(width: 0),
-                    selected: _avatarUrl == url,
-                    onSelected: (_) => setState(() => _avatarUrl = url),
-                  ),
-                )
-                .toList(),
+          _AvatarPicker(
+            options: _avatarOptions,
+            selectedPath: _avatarPath,
+            onSelect: (path) => setState(() {
+              _avatarPath = path;
+              _useAsset = true;
+            }),
           ),
           const SizedBox(height: 24),
           TextField(
@@ -137,18 +149,76 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _saveProfile() {
-    final appState = context.appState;
-    final profile = _currentProfile.copyWith(
+    final updated = _baseProfile.copyWith(
       username: _usernameController.text.trim(),
       email: _emailController.text.trim(),
       phone: _phoneController.text.trim(),
       bio: _bioController.text.trim(),
-      avatarUrl: _avatarUrl,
+      avatarPath: _avatarPath,
+      useAsset: _useAsset,
     );
-    appState.updateProfile(widget.userType, profile);
+    context.appState.updateProfile(widget.userType, updated);
+    if (!mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(context.l10n.t('profile_save'))));
     Navigator.of(context).pop();
+  }
+}
+
+class _AvatarPicker extends StatelessWidget {
+  const _AvatarPicker({
+    required this.options,
+    required this.selectedPath,
+    required this.onSelect,
+  });
+
+  final List<String> options;
+  final String selectedPath;
+  final ValueChanged<String> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      children: options.map((path) {
+        final isSelected = path == selectedPath;
+        return GestureDetector(
+          onTap: () => onSelect(path),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : theme.dividerColor,
+                width: 2,
+              ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.25,
+                        ),
+                        blurRadius: 16,
+                        spreadRadius: 1,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: ProfileAvatar(
+              path: path,
+              useAsset: true,
+              radius: 28,
+              backgroundColor: theme.colorScheme.surface,
+            ),
+          ),
+        );
+      }).toList(),
+    );
   }
 }
