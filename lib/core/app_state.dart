@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../models/app_language.dart';
 import '../models/geo_point.dart';
 import '../models/medicine.dart';
+import '../models/medicine_request.dart';
 import '../models/pharmacy.dart';
 import '../models/user_profile.dart';
 import '../models/user_type.dart';
@@ -86,6 +87,41 @@ class AppState extends ChangeNotifier {
     _seedMedicine('med-lumexa', 'Lumexa Eye Drops', 4100, 'pharmacy-horizon'),
   ];
 
+  late final List<MedicineRequest> _requests = [
+    const MedicineRequest(
+      id: 'req-001',
+      username: 'Aline Djoum',
+      contact: '+237 699 222 123',
+      medicineName: 'Ventex 10 mg',
+      avatarPath: 'assets/avatars/avatar_coral.svg',
+      useAsset: true,
+    ),
+    const MedicineRequest(
+      id: 'req-002',
+      username: 'Maurice Ekome',
+      contact: '+237 676 004 555',
+      medicineName: 'Clarion Insulin',
+      avatarPath: 'assets/avatars/avatar_sunrise.svg',
+      useAsset: true,
+    ),
+    const MedicineRequest(
+      id: 'req-003',
+      username: 'Sophie Ambassa',
+      contact: '+237 670 112 098',
+      medicineName: 'Saflex Cough Relief',
+      avatarPath: 'assets/avatars/avatar_wave.svg',
+      useAsset: true,
+    ),
+    const MedicineRequest(
+      id: 'req-004',
+      username: 'Daryl Mboa',
+      contact: '+237 658 889 400',
+      medicineName: 'Lumexa Eye Drops',
+      avatarPath:
+          'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=300&q=80',
+    ),
+  ];
+
   UserProfile _pharmacyProfile = const UserProfile(
     username: 'Aurora Care',
     email: 'hello@auroracare.cm',
@@ -115,6 +151,8 @@ class AppState extends ChangeNotifier {
   List<Pharmacy> get pharmacies => _pharmacies.values.toList(growable: false);
 
   List<Medicine> get medicines => List.unmodifiable(_medicines);
+
+  List<MedicineRequest> get medicineRequests => List.unmodifiable(_requests);
 
   Pharmacy get primaryPharmacy => pharmacyById(primaryPharmacyId);
 

@@ -41,6 +41,12 @@ class Localizer {
       'stats_requests_sub': 'Patient pings this week',
       'stats_coverage': 'Community reach',
       'stats_coverage_sub': 'Avg. delivery radius',
+      'requests_screen_title': 'Patient requests',
+      'requests_screen_subtitle':
+          'Review every patient asking your pharmacy for a medicine.',
+      'requests_screen_empty': 'No one has requested a medicine yet.',
+      'requests_contact': 'Contact',
+      'requests_medicine_label': 'Requested',
       'pharmacy_manage_title': 'Medicines you added',
       'pharmacy_manage_sub': 'Update price, stock & visibility',
       'map_title': 'Community map',
@@ -126,6 +132,13 @@ class Localizer {
       'stats_requests_sub': 'Alertes patients cette semaine',
       'stats_coverage': 'Rayon communautaire',
       'stats_coverage_sub': 'Rayon moyen de livraison',
+      'requests_screen_title': 'Demandes patients',
+      'requests_screen_subtitle':
+          'Consultez chaque patient qui attend un médicament chez vous.',
+      'requests_screen_empty':
+          'Aucun patient ne vous a encore demandé de médicament.',
+      'requests_contact': 'Contact',
+      'requests_medicine_label': 'Demande',
       'pharmacy_manage_title': 'Vos médicaments ajoutés',
       'pharmacy_manage_sub': 'Mettez à jour prix, stock et visibilité',
       'map_title': 'Carte communautaire',
