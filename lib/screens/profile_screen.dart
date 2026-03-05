@@ -99,7 +99,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               path: _avatarPath,
               useAsset: _useAsset,
               radius: 52,
-              backgroundColor: theme.colorScheme.surfaceVariant,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest,
             ),
           ),
           const SizedBox(height: 16),

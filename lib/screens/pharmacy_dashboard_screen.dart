@@ -10,7 +10,9 @@ import '../widgets/pharmacy_map_card.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/section_card.dart';
 import '../widgets/theme_toggle_button.dart';
+import 'community_map_screen.dart';
 import 'profile_screen.dart';
+import 'my_medicines_screen.dart';
 
 class PharmacyDashboardScreen extends StatelessWidget {
   const PharmacyDashboardScreen({super.key});
@@ -27,6 +29,20 @@ class PharmacyDashboardScreen extends StatelessWidget {
         actions: [
           const LanguageToggle(dense: true),
           const ThemeToggleButton(),
+          IconButton(
+            tooltip: l10n.t('map_cta'),
+            icon: const Icon(Icons.public_rounded),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CommunityMapScreen()),
+            ),
+          ),
+          IconButton(
+            tooltip: l10n.t('my_medicines_title'),
+            icon: const Icon(Icons.inventory_2_rounded),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const MyMedicinesScreen()),
+            ),
+          ),
           IconButton(
             tooltip: l10n.t('profile_picture'),
             iconSize: 40,
@@ -60,8 +76,30 @@ class PharmacyDashboardScreen extends StatelessWidget {
             title: l10n.t('pharmacy_manage_title'),
             subtitle: l10n.t('pharmacy_manage_sub'),
             child: Column(
-              children: owned
-                  .map(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const MyMedicinesScreen(),
+                      ),
+                    ),
+                    icon: const Icon(Icons.open_in_new_rounded),
+                    label: Text(l10n.t('my_medicines_title')),
+                  ),
+                ),
+                if (owned.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      l10n.t('my_medicines_empty_hint'),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                if (owned.isNotEmpty)
+                  ...owned.map(
                     (medicine) => MedicineTile(
                       medicine: medicine,
                       pharmacy: appState.primaryPharmacy,
@@ -76,8 +114,8 @@ class PharmacyDashboardScreen extends StatelessWidget {
                         },
                       ),
                     ),
-                  )
-                  .toList(),
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 24),

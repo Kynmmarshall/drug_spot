@@ -21,7 +21,8 @@ class ProfileAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: radius,
       backgroundColor:
-          backgroundColor ?? Theme.of(context).colorScheme.surfaceVariant,
+          backgroundColor ??
+          Theme.of(context).colorScheme.surfaceContainerHighest,
       child: ClipOval(
         child: SizedBox(width: size, height: size, child: _buildImage(context)),
       ),

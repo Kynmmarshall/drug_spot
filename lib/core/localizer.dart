@@ -47,6 +47,9 @@ class Localizer {
       'map_subtitle': 'Live view of verified pharmacies',
       'map_cta': 'Expand map',
       'map_legend': 'Tap a pin for more details',
+      'community_map_intro':
+          'Explore every verified pharmacy and gauge distance instantly.',
+      'community_map_pharmacies': 'pharmacies mapped',
       'medicine_all_section': 'Entire marketplace',
       'patient_all_medicines': 'Available medicines',
       'search_placeholder': 'Search a medicine name',
@@ -71,6 +74,10 @@ class Localizer {
       'profile_picture': 'Profile photo',
       'profile_username_helper': 'Visible across dashboards.',
       'profile_phone_helper': 'WhatsApp-ready number preferred.',
+      'my_medicines_title': 'My medicines',
+      'my_medicines_empty': 'You have not published any medicines yet.',
+      'my_medicines_empty_hint':
+          'Use the button below to publish your first listing.',
       'dark_theme': 'Switch to dark theme',
       'light_theme': 'Switch to light theme',
       'distance_chip_nearby': 'Nearby',
@@ -125,6 +132,9 @@ class Localizer {
       'map_subtitle': 'Vue des pharmacies vérifiées',
       'map_cta': 'Ouvrir la carte',
       'map_legend': 'Touchez une épingle pour les détails',
+      'community_map_intro':
+          "Explorez chaque pharmacie vérifiée et mesurez les distances en un coup d'oeil.",
+      'community_map_pharmacies': 'pharmacies cartographiées',
       'medicine_all_section': 'Marché complet',
       'patient_all_medicines': 'Médicaments disponibles',
       'search_placeholder': 'Rechercher un médicament',
@@ -151,6 +161,10 @@ class Localizer {
       'profile_picture': 'Photo de profil',
       'profile_username_helper': 'Visible sur les tableaux.',
       'profile_phone_helper': 'Numéro WhatsApp recommandé.',
+      'my_medicines_title': 'Mes médicaments',
+      'my_medicines_empty': "Vous n'avez pas encore publié de médicament.",
+      'my_medicines_empty_hint':
+          'Utilisez le bouton ci-dessous pour créer votre première fiche.',
       'dark_theme': 'Passer en thème sombre',
       'light_theme': 'Passer en thème clair',
       'distance_chip_nearby': 'À proximité',

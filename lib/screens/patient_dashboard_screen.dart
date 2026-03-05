@@ -9,6 +9,7 @@ import '../widgets/medicine_tile.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/section_card.dart';
 import '../widgets/theme_toggle_button.dart';
+import 'community_map_screen.dart';
 import 'profile_screen.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
@@ -77,6 +78,13 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
         actions: [
           const LanguageToggle(dense: true),
           const ThemeToggleButton(),
+          IconButton(
+            tooltip: l10n.t('map_cta'),
+            icon: const Icon(Icons.public_rounded),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const CommunityMapScreen()),
+            ),
+          ),
           IconButton(
             tooltip: l10n.t('profile_picture'),
             iconSize: 40,
