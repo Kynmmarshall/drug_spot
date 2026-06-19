@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Drug Spot — Find Medicines Near You</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ── Nav ── -->
+  <nav id="navbar">
+    <div class="container nav-inner">
+      <a href="#" class="logo">
+        <span class="logo-icon">💊</span>
+        Drug Spot
+      </a>
+      <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+      </button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#screens">Screens</a></li>
+        <li><a href="#download" class="nav-cta">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+          Download
+        </a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ── Hero ── -->
+  <section class="hero" id="hero">
+    <div class="hero-bg-orb orb1"></div>
+    <div class="hero-bg-orb orb2"></div>
+    <div class="container hero-grid">
+      <div class="hero-text">
+        <div class="hero-badge">
+          <span class="dot"></span>
+          Available in English & French
+        </div>
+        <h1>
+          Find Your<br/>
+          <span class="gradient-text">Medicine Nearby</span>
+        </h1>
+        <p>
+          Locate pharmacies, compare prices, and check medicine availability — all from your phone. Drug Spot connects patients to the medicines they need, fast.
+        </p>
+        <div class="hero-actions">
+          <a href="#download" class="btn-primary">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+            Download APK
+          </a>
+          <a href="#features" class="btn-secondary">
+            Explore Features
+          </a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="phone-mockup">
+          <div class="phone-screen">
+            <div class="phone-notch"></div>
+            <div class="phone-header">💊 Drug Spot</div>
+            <div class="phone-search">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>
+              Search medicines...
+            </div>
+            <div class="phone-card">
+              <div class="phone-card-name"><span class="phone-card-dot" style="background:var(--sky)"></span>Ventex 10 mg</div>
+              <div class="phone-card-sub">Aurora Care Pharmacy</div>
+              <div class="phone-card-row">
+                <span class="phone-card-price">1,850 FCFA</span>
+                <span class="phone-card-dist">0.2 km</span>
+              </div>
+            </div>
+            <div class="phone-card">
+              <div class="phone-card-name"><span class="phone-card-dot" style="background:var(--rose)"></span>Neurozil Forte</div>
+              <div class="phone-card-sub">Horizon Pharma</div>
+              <div class="phone-card-row">
+                <span class="phone-card-price">6,400 FCFA</span>
+                <span class="phone-card-dist">0.3 km</span>
+              </div>
+            </div>
+            <div class="phone-card">
+              <div class="phone-card-name"><span class="phone-card-dot" style="background:var(--emerald)"></span>Clarion Insulin</div>
+              <div class="phone-card-sub">Lotus Med Hub</div>
+              <div class="phone-card-row">
+                <span class="phone-card-price">11,800 FCFA</span>
+                <span class="phone-card-dist">0.1 km</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="floating-card float-card-1">
+          <div class="float-icon" style="background:rgba(52,211,153,0.12);">📍</div>
+          <div class="float-label">Pharmacies</div>
+          <div class="float-value">120+</div>
+        </div>
+        <div class="floating-card float-card-2">
+          <div class="float-icon" style="background:rgba(251,113,133,0.12);">💊</div>
+          <div class="float-label">Medicines</div>
+          <div class="float-value">2,400+</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Stats ── -->
+  <section class="stats-bar">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item animate-on-scroll">
+          <div class="stat-number" data-count="120">0+</div>
+          <div class="stat-label">Pharmacies Listed</div>
+        </div>
+        <div class="stat-item animate-on-scroll">
+          <div class="stat-number" data-count="2400">0+</div>
+          <div class="stat-label">Medicines Available</div>
+        </div>
+        <div class="stat-item animate-on-scroll">
+          <div class="stat-number" data-count="5000">0+</div>
+          <div class="stat-label">Active Users</div>
+        </div>
+        <div class="stat-item animate-on-scroll">
+          <div class="stat-number">2</div>
+          <div class="stat-label">Languages Supported</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Features ── -->
+  <section class="features" id="features">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-tag">Features</span>
+        <h2>Everything You Need to Find Medicine</h2>
+        <p>Powerful tools for patients and pharmacies, designed for the Cameroon healthcare landscape.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon" style="background:rgba(56,189,248,0.12);">🔍</div>
+          <h3>Smart Medicine Search</h3>
+          <p>Search by name, filter by distance and price. Find exactly what you need at the closest pharmacy.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon" style="background:rgba(52,211,153,0.12);">🗺️</div>
+          <h3>Community Map</h3>
+          <p>See all pharmacies on an interactive map with real-time distance calculations from your location.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon" style="background:rgba(251,113,133,0.12);">💊</div>
+          <h3>Pharmacy Management</h3>
+          <p>Pharmacy owners can add, edit, and manage their medicine inventory directly from the app.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon" style="background:rgba(251,191,36,0.12);">💰</div>
+          <h3>Price Transparency</h3>
+          <p>Compare medicine prices across pharmacies. No hidden costs — see FCFA pricing upfront.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon" style="background:rgba(167,139,250,0.12);">🌙</div>
+          <h3>Dark & Light Themes</h3>
+          <p>Easy on the eyes, day or night. Toggle between beautifully designed light and dark modes.</p>
+        </div>
+        <div class="feature-card animate-on-scroll">
+          <div class="feature-icon" style="background:rgba(79,70,229,0.12);">🌍</div>
+          <h3>Bilingual Support</h3>
+          <p>Fully translated in English and French — switch languages instantly from anywhere in the app.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── How It Works ── -->
+  <section class="how-it-works" id="how-it-works">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-tag">How It Works</span>
+        <h2>Get Your Medicine in 4 Simple Steps</h2>
+        <p>Whether you're a patient or pharmacy owner, getting started takes under a minute.</p>
+      </div>
+      <div class="steps-grid">
+        <div class="step-card animate-on-scroll">
+          <div class="step-number">1</div>
+          <div class="step-connector"></div>
+          <h3>Create Account</h3>
+          <p>Sign up as a patient or pharmacy owner with your email and phone number.</p>
+        </div>
+        <div class="step-card animate-on-scroll">
+          <div class="step-number">2</div>
+          <div class="step-connector"></div>
+          <h3>Enable Location</h3>
+          <p>Allow location access so we can show pharmacies and distances near you.</p>
+        </div>
+        <div class="step-card animate-on-scroll">
+          <div class="step-number">3</div>
+          <div class="step-connector"></div>
+          <h3>Search Medicines</h3>
+          <p>Browse or search for the medicine you need. Filter by price and distance.</p>
+        </div>
+        <div class="step-card animate-on-scroll">
+          <div class="step-number">4</div>
+          <h3>Visit Pharmacy</h3>
+          <p>Get directions to the nearest pharmacy that has your medicine in stock.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── App Screens Carousel ── -->
+  <section class="screenshots" id="screens">
+    <div class="container">
+      <div class="section-header animate-on-scroll">
+        <span class="section-tag">App Preview</span>
+        <h2>Designed for Clarity & Speed</h2>
+        <p>A clean, modern interface built with Material 3 and Space Grotesk typography.</p>
+      </div>
+    </div>
+    <div class="screenshot-track" aria-hidden="true">
+      <div class="screenshot-item">
+        <div class="ss-title">Patient Dashboard</div>
+        <div class="ss-sub">Search & filter medicines</div>
+        <div class="ss-content">
+          <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:10px;margin-bottom:6px;">
+            <div style="display:flex;gap:6px;">
+              <span class="ss-badge" style="background:rgba(56,189,248,0.2);color:var(--sky);">Nearby</span>
+              <span class="ss-badge" style="background:rgba(52,211,153,0.2);color:var(--emerald);">Affordable</span>
+            </div>
+          </div>
+          <div class="ss-row"><div class="ss-dot" style="background:var(--sky);"></div><div><div class="ss-line w60"></div><div class="ss-line w40" style="margin-top:4px;"></div></div></div>
+          <div class="ss-row"><div class="ss-dot" style="background:var(--rose);"></div><div><div class="ss-line w80"></div><div class="ss-line w40" style="margin-top:4px;"></div></div></div>
+          <div class="ss-row"><div class="ss-dot" style="background:var(--emerald);"></div><div><div class="ss-line w60"></div><div class="ss-line w40" style="margin-top:4px;"></div></div></div>
+        </div>
+      </div>
+      <div class="screenshot-item">
+        <div class="ss-title">Pharmacy Dashboard</div>
+        <div class="ss-sub">Manage inventory & requests</div>
+        <div class="ss-content">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div style="background:linear-gradient(135deg,var(--indigo),var(--emerald));border-radius:14px;padding:14px;">
+              <div style="color:#fff;font-weight:800;font-size:1.3rem;">06</div>
+              <div style="color:rgba(255,255,255,0.7);font-size:0.7rem;">Medicines</div>
+            </div>
+            <div style="background:linear-gradient(135deg,#F97316,#FDE047);border-radius:14px;padding:14px;">
+              <div style="color:#fff;font-weight:800;font-size:1.3rem;">24</div>
+              <div style="color:rgba(255,255,255,0.7);font-size:0.7rem;">Requests</div>
+            </div>
+          </div>
+          <div class="ss-row"><div class="ss-dot" style="background:var(--sky);"></div><div><div class="ss-line w60"></div><div class="ss-line w40" style="margin-top:4px;"></div></div></div>
+          <div class="ss-row"><div class="ss-dot" style="background:var(--amber);"></div><div><div class="ss-line w80"></div><div class="ss-line w40" style="margin-top:4px;"></div></div></div>
+        </div>
+      </div>
+      <div class="screenshot-item">
+        <div class="ss-title">Community Map</div>
+        <div class="ss-sub">All pharmacies at a glance</div>
+        <div class="ss-content">
+          <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:14px;padding:16px;position:relative;">
+            <div style="position:absolute;top:20%;left:30%;width:12px;height:12px;border-radius:50%;background:var(--sky);box-shadow:0 0 12px var(--sky);"></div>
+            <div style="position:absolute;top:45%;left:55%;width:12px;height:12px;border-radius:50%;background:var(--rose);box-shadow:0 0 12px var(--rose);"></div>
+            <div style="position:absolute;top:35%;left:40%;width:12px;height:12px;border-radius:50%;background:var(--emerald);box-shadow:0 0 12px var(--emerald);"></div>
+            <div style="position:absolute;top:70%;left:70%;width:12px;height:12px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber);"></div>
+            <div style="position:absolute;inset:10px;opacity:0.06;background-image:linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px);background-size:25% 25%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="screenshot-item">
+        <div class="ss-title">Medicine Detail</div>
+        <div class="ss-sub">Price, distance & pharmacy info</div>
+        <div class="ss-content">
+          <div style="background:linear-gradient(135deg,rgba(56,189,248,0.3),rgba(56,189,248,0.05));border-radius:16px;padding:20px;text-align:center;margin-bottom:8px;">
+            <div style="color:#fff;font-weight:800;font-size:1.3rem;">Ventex 10 mg</div>
+            <div style="color:var(--emerald);font-weight:700;font-size:1.1rem;margin-top:4px;">1,850 FCFA</div>
+          </div>
+          <div class="ss-row"><div style="color:rgba(255,255,255,0.5);font-size:0.75rem;">📍 Aurora Care Pharmacy</div></div>
+          <div class="ss-row"><div style="color:rgba(255,255,255,0.5);font-size:0.75rem;">📞 +237 699 123 456</div></div>
+          <div class="ss-row"><div style="color:rgba(255,255,255,0.5);font-size:0.75rem;">📏 0.2 km away</div></div>
+        </div>
+      </div>
+      <div class="screenshot-item">
+        <div class="ss-title">User Profile</div>
+        <div class="ss-sub">Manage your account</div>
+        <div class="ss-content">
+          <div style="text-align:center;margin-bottom:12px;">
+            <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--emerald),var(--sky));margin:0 auto 8px;"></div>
+            <div style="color:#fff;font-weight:600;font-size:0.9rem;">Aurora Care</div>
+            <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;">hello@auroracare.cm</div>
+          </div>
+          <div class="ss-row"><div style="flex:1;"><div class="ss-line w80"></div></div></div>
+          <div class="ss-row"><div style="flex:1;"><div class="ss-line w60"></div></div></div>
+          <div class="ss-row"><div style="flex:1;"><div class="ss-line w80"></div></div></div>
+        </div>
+      </div>
+      <div class="screenshot-item">
+        <div class="ss-title">Login</div>
+        <div class="ss-sub">Pharmacy or Patient access</div>
+        <div class="ss-content">
+          <div style="display:flex;gap:6px;margin-bottom:12px;">
+            <div style="flex:1;background:var(--indigo);color:#fff;text-align:center;padding:8px;border-radius:10px;font-size:0.75rem;font-weight:600;">Pharmacy</div>
+            <div style="flex:1;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);text-align:center;padding:8px;border-radius:10px;font-size:0.75rem;">Patient</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;margin-bottom:8px;"><div class="ss-line w40" style="opacity:0.3;"></div></div>
+          <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;margin-bottom:12px;"><div class="ss-line w60" style="opacity:0.3;"></div></div>
+          <div style="background:var(--indigo);border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:0.8rem;font-weight:600;">Sign In</div>
+        </div>
+      </div>
+      <!-- Duplicates for infinite scroll -->
+      <div class="screenshot-item">
+        <div class="ss-title">Patient Dashboard</div>
+        <div class="ss-sub">Search & filter medicines</div>
+        <div class="ss-content">
+          <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:10px;margin-bottom:6px;">
+            <div style="display:flex;gap:6px;">
+              <span class="ss-badge" style="background:rgba(56,189,248,0.2);color:var(--sky);">Nearby</span>
+              <span class="ss-badge" style="background:rgba(52,211,153,0.2);color:var(--emerald);">Affordable</span>
+            </div>
+          </div>
+          <div class="ss-row"><div class="ss-dot" style="background:var(--sky);"></div><div><div class="ss-line w60"></div><div class="ss-line w40" style="margin-top:4px;"></div></div></div>
+          <div class="ss-row"><div class="ss-dot" style="background:var(--rose);"></div><div><div class="ss-line w80"></div><div class="ss-line w40" style="margin-top:4px;"></div></div></div>
+          <div class="ss-row"><div class="ss-dot" style="background:var(--emerald);"></div><div><div class="ss-line w60"></div><div class="ss-line w40" style="margin-top:4px;"></div></div></div>
+        </div>
+      </div>
+      <div class="screenshot-item">
+        <div class="ss-title">Pharmacy Dashboard</div>
+        <div class="ss-sub">Manage inventory & requests</div>
+        <div class="ss-content">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div style="background:linear-gradient(135deg,var(--indigo),var(--emerald));border-radius:14px;padding:14px;">
+              <div style="color:#fff;font-weight:800;font-size:1.3rem;">06</div>
+              <div style="color:rgba(255,255,255,0.7);font-size:0.7rem;">Medicines</div>
+            </div>
+            <div style="background:linear-gradient(135deg,#F97316,#FDE047);border-radius:14px;padding:14px;">
+              <div style="color:#fff;font-weight:800;font-size:1.3rem;">24</div>
+              <div style="color:rgba(255,255,255,0.7);font-size:0.7rem;">Requests</div>
+            </div>
+          </div>
+          <div class="ss-row"><div class="ss-dot" style="background:var(--sky);"></div><div><div class="ss-line w60"></div><div class="ss-line w40" style="margin-top:4px;"></div></div></div>
+          <div class="ss-row"><div class="ss-dot" style="background:var(--amber);"></div><div><div class="ss-line w80"></div><div class="ss-line w40" style="margin-top:4px;"></div></div></div>
+        </div>
+      </div>
+      <div class="screenshot-item">
+        <div class="ss-title">Community Map</div>
+        <div class="ss-sub">All pharmacies at a glance</div>
+        <div class="ss-content">
+          <div style="flex:1;background:rgba(255,255,255,0.03);border-radius:14px;padding:16px;position:relative;">
+            <div style="position:absolute;top:20%;left:30%;width:12px;height:12px;border-radius:50%;background:var(--sky);box-shadow:0 0 12px var(--sky);"></div>
+            <div style="position:absolute;top:45%;left:55%;width:12px;height:12px;border-radius:50%;background:var(--rose);box-shadow:0 0 12px var(--rose);"></div>
+            <div style="position:absolute;top:35%;left:40%;width:12px;height:12px;border-radius:50%;background:var(--emerald);box-shadow:0 0 12px var(--emerald);"></div>
+            <div style="position:absolute;top:70%;left:70%;width:12px;height:12px;border-radius:50%;background:var(--amber);box-shadow:0 0 12px var(--amber);"></div>
+            <div style="position:absolute;inset:10px;opacity:0.06;background-image:linear-gradient(rgba(255,255,255,0.5) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.5) 1px,transparent 1px);background-size:25% 25%;"></div>
+          </div>
+        </div>
+      </div>
+      <div class="screenshot-item">
+        <div class="ss-title">Medicine Detail</div>
+        <div class="ss-sub">Price, distance & pharmacy info</div>
+        <div class="ss-content">
+          <div style="background:linear-gradient(135deg,rgba(56,189,248,0.3),rgba(56,189,248,0.05));border-radius:16px;padding:20px;text-align:center;margin-bottom:8px;">
+            <div style="color:#fff;font-weight:800;font-size:1.3rem;">Ventex 10 mg</div>
+            <div style="color:var(--emerald);font-weight:700;font-size:1.1rem;margin-top:4px;">1,850 FCFA</div>
+          </div>
+          <div class="ss-row"><div style="color:rgba(255,255,255,0.5);font-size:0.75rem;">📍 Aurora Care Pharmacy</div></div>
+          <div class="ss-row"><div style="color:rgba(255,255,255,0.5);font-size:0.75rem;">📞 +237 699 123 456</div></div>
+          <div class="ss-row"><div style="color:rgba(255,255,255,0.5);font-size:0.75rem;">📏 0.2 km away</div></div>
+        </div>
+      </div>
+      <div class="screenshot-item">
+        <div class="ss-title">User Profile</div>
+        <div class="ss-sub">Manage your account</div>
+        <div class="ss-content">
+          <div style="text-align:center;margin-bottom:12px;">
+            <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--emerald),var(--sky));margin:0 auto 8px;"></div>
+            <div style="color:#fff;font-weight:600;font-size:0.9rem;">Aurora Care</div>
+            <div style="color:rgba(255,255,255,0.4);font-size:0.75rem;">hello@auroracare.cm</div>
+          </div>
+          <div class="ss-row"><div style="flex:1;"><div class="ss-line w80"></div></div></div>
+          <div class="ss-row"><div style="flex:1;"><div class="ss-line w60"></div></div></div>
+          <div class="ss-row"><div style="flex:1;"><div class="ss-line w80"></div></div></div>
+        </div>
+      </div>
+      <div class="screenshot-item">
+        <div class="ss-title">Login</div>
+        <div class="ss-sub">Pharmacy or Patient access</div>
+        <div class="ss-content">
+          <div style="display:flex;gap:6px;margin-bottom:12px;">
+            <div style="flex:1;background:var(--indigo);color:#fff;text-align:center;padding:8px;border-radius:10px;font-size:0.75rem;font-weight:600;">Pharmacy</div>
+            <div style="flex:1;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.5);text-align:center;padding:8px;border-radius:10px;font-size:0.75rem;">Patient</div>
+          </div>
+          <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;margin-bottom:8px;"><div class="ss-line w40" style="opacity:0.3;"></div></div>
+          <div style="background:rgba(255,255,255,0.06);border-radius:12px;padding:12px;margin-bottom:12px;"><div class="ss-line w60" style="opacity:0.3;"></div></div>
+          <div style="background:var(--indigo);border-radius:12px;padding:12px;text-align:center;color:#fff;font-size:0.8rem;font-weight:600;">Sign In</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Download ── -->
+  <section class="download-section" id="download">
+    <div class="container">
+      <div class="download-card animate-on-scroll">
+        <h2>Ready to Find Your Medicine?</h2>
+        <p>Download Drug Spot now and never worry about finding the right pharmacy again. Free for patients, always.</p>
+        <div class="download-buttons">
+          <a href="download/drug_spot.apk" download class="btn-download btn-download-primary" id="downloadBtn">
+            <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+            Download APK
+          </a>
+          <a href="#features" class="btn-download btn-download-outline">
+            Learn More
+          </a>
+        </div>
+        <p class="download-note">
+          Android 6.0+ required &nbsp;·&nbsp; <span class="apk-size">APK ~25 MB</span>
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <div class="container footer-inner">
+      <div class="footer-copy">&copy; 2026 Drug Spot. Built for Cameroon.</div>
+      <ul class="footer-links">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how-it-works">How It Works</a></li>
+        <li><a href="#download">Download</a></li>
+      </ul>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
