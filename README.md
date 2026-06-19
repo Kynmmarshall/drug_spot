@@ -1,6 +1,6 @@
 # Drug Spot
 
-A Flutter mobile application that helps patients locate pharmacies and find available medicines nearby, with pricing and distance information.
+A Flutter mobile application that helps patients locate pharmacies and find available medicines nearby, with pricing and distance information..
 
 ## Features
 
