@@ -3,9 +3,13 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/app_state.dart';
 import 'core/app_theme.dart';
+import 'models/user_type.dart';
 import 'screens/login_screen.dart';
+import 'screens/patient_dashboard_screen.dart';
+import 'screens/pharmacy_dashboard_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const DrugSpotApp());
 }
 
@@ -18,6 +22,12 @@ class DrugSpotApp extends StatefulWidget {
 
 class _DrugSpotAppState extends State<DrugSpotApp> {
   final AppState _state = AppState();
+
+  @override
+  void initState() {
+    super.initState();
+    _state.init();
+  }
 
   @override
   void dispose() {
@@ -45,10 +55,26 @@ class _DrugSpotAppState extends State<DrugSpotApp> {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            home: const LoginScreen(),
+            home: _buildHome(),
           ),
         );
       },
     );
+  }
+
+  Widget _buildHome() {
+    if (!_state.initialized) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_state.isLoggedIn) {
+      return _state.currentUserType == UserType.pharmacy
+          ? const PharmacyDashboardScreen()
+          : const PatientDashboardScreen();
+    }
+
+    return const LoginScreen();
   }
 }

@@ -101,17 +101,26 @@ class PharmacyDashboardScreen extends StatelessWidget {
           child: MedicineFormSheet(
             pharmacy: appState.primaryPharmacy,
             medicine: medicine,
-            onSubmit: (value) {
-              if (medicine == null) {
-                appState.addMedicine(value);
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(l10n.t('med_created'))));
-              } else {
-                appState.updateMedicine(value);
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(l10n.t('med_updated'))));
+            onSubmit: (value) async {
+              try {
+                if (medicine == null) {
+                  await appState.addMedicine(value);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.t('med_created'))),
+                  );
+                } else {
+                  await appState.updateMedicine(value);
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(l10n.t('med_updated'))),
+                  );
+                }
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(e.toString())),
+                );
               }
             },
           ),

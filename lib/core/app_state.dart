@@ -9,6 +9,7 @@ import '../models/medicine_request.dart';
 import '../models/pharmacy.dart';
 import '../models/user_profile.dart';
 import '../models/user_type.dart';
+import '../services/api_service.dart';
 import '../services/location_service.dart';
 import 'localizer.dart';
 
@@ -27,118 +28,32 @@ class AppStateScope extends InheritedNotifier<AppState> {
 }
 
 class AppState extends ChangeNotifier {
-  AppState({LocationService? locationService})
-    : _locationService = locationService ?? LocationService();
+  AppState({
+    ApiService? apiService,
+    LocationService? locationService,
+  })  : _api = apiService ?? ApiService(),
+        _locationService = locationService ?? LocationService();
 
+  final ApiService _api;
   final LocationService _locationService;
+
+  // ── Initialization & auth state ──
+
+  bool _initialized = false;
+  bool _isLoggedIn = false;
+  bool _isLoading = false;
+  String? _error;
+
+  bool get initialized => _initialized;
+  bool get isLoggedIn => _isLoggedIn;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+
+  // ── UI-only state ──
 
   ThemeMode _themeMode = ThemeMode.light;
   AppLanguage _language = AppLanguage.en;
   UserType _loginType = UserType.patient;
-
-  final String primaryPharmacyId = 'pharmacy-aurora';
-  final GeoPoint patientLocation = const GeoPoint(lat: 3.876, lng: 11.514);
-
-  late final Map<String, Pharmacy> _pharmacies = {
-    'pharmacy-aurora': const Pharmacy(
-      id: 'pharmacy-aurora',
-      name: 'Aurora Care Pharmacy',
-      address: '12 Unity Ave, Bonapriso',
-      lat: 4.043,
-      lng: 9.706,
-      phone: '+237 699 123 456',
-      accent: Color(0xFF38BDF8),
-    ),
-    'pharmacy-horizon': const Pharmacy(
-      id: 'pharmacy-horizon',
-      name: 'Horizon Pharma',
-      address: '45 Palm Ring Rd, Yaoundé',
-      lat: 3.861,
-      lng: 11.517,
-      phone: '+237 653 440 201',
-      accent: Color(0xFFFB7185),
-    ),
-    'pharmacy-lotus': const Pharmacy(
-      id: 'pharmacy-lotus',
-      name: 'Lotus Med Hub',
-      address: 'Rue 532, Bastos',
-      lat: 3.884,
-      lng: 11.513,
-      phone: '+237 677 332 871',
-      accent: Color(0xFF34D399),
-    ),
-    'pharmacy-coastline': const Pharmacy(
-      id: 'pharmacy-coastline',
-      name: 'Coastline Relief',
-      address: '257 Marine Dr, Kribi',
-      lat: 2.939,
-      lng: 9.910,
-      phone: '+237 620 112 900',
-      accent: Color(0xFFFBBF24),
-    ),
-  };
-
-  late final List<Medicine> _medicines = [
-    _seedMedicine('med-ventex', 'Ventex 10 mg', 1850, 'pharmacy-aurora'),
-    _seedMedicine('med-neurozil', 'Neurozil Forte', 6400, 'pharmacy-horizon'),
-    _seedMedicine('med-saflex', 'Saflex Cough Relief', 2300, 'pharmacy-aurora'),
-    _seedMedicine('med-clarion', 'Clarion Insulin', 11800, 'pharmacy-lotus'),
-    _seedMedicine('med-mavyo', 'Mavyo Kids Syrup', 3200, 'pharmacy-coastline'),
-    _seedMedicine('med-lumexa', 'Lumexa Eye Drops', 4100, 'pharmacy-horizon'),
-  ];
-
-  late final List<MedicineRequest> _requests = [
-    const MedicineRequest(
-      id: 'req-001',
-      username: 'Aline Djoum',
-      contact: '+237 699 222 123',
-      medicineName: 'Ventex 10 mg',
-      avatarPath: 'assets/avatars/avatar_coral.svg',
-      useAsset: true,
-    ),
-    const MedicineRequest(
-      id: 'req-002',
-      username: 'Maurice Ekome',
-      contact: '+237 676 004 555',
-      medicineName: 'Clarion Insulin',
-      avatarPath: 'assets/avatars/avatar_sunrise.svg',
-      useAsset: true,
-    ),
-    const MedicineRequest(
-      id: 'req-003',
-      username: 'Sophie Ambassa',
-      contact: '+237 670 112 098',
-      medicineName: 'Saflex Cough Relief',
-      avatarPath: 'assets/avatars/avatar_wave.svg',
-      useAsset: true,
-    ),
-    const MedicineRequest(
-      id: 'req-004',
-      username: 'Daryl Mboa',
-      contact: '+237 658 889 400',
-      medicineName: 'Lumexa Eye Drops',
-      avatarPath:
-          'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?auto=format&fit=crop&w=300&q=80',
-    ),
-  ];
-
-  UserProfile _pharmacyProfile = const UserProfile(
-    username: 'Aurora Care',
-    email: 'hello@auroracare.cm',
-    phone: '+237 699 123 456',
-    bio: 'Precision-led pharmacy with coastal delivery.',
-    avatarPath: 'assets/avatars/avatar_wave.svg',
-    useAsset: true,
-  );
-
-  UserProfile _patientProfile = const UserProfile(
-    username: 'Patient Lumi',
-    email: 'patient@drugspot.app',
-    phone: '+237 680 777 001',
-    bio: 'Actively tracking stock for chronic care.',
-    avatarPath: 'assets/avatars/avatar_mint.svg',
-    useAsset: true,
-  );
 
   ThemeMode get themeMode => _themeMode;
   AppLanguage get language => _language;
@@ -146,27 +61,9 @@ class AppState extends ChangeNotifier {
   Locale get locale => Locale(_language.code);
   Localizer get localizer => Localizer(_language);
 
-  Pharmacy pharmacyById(String id) => _pharmacies[id]!;
-
-  List<Pharmacy> get pharmacies => _pharmacies.values.toList(growable: false);
-
-  List<Medicine> get medicines => List.unmodifiable(_medicines);
-
-  List<MedicineRequest> get medicineRequests => List.unmodifiable(_requests);
-
-  Pharmacy get primaryPharmacy => pharmacyById(primaryPharmacyId);
-
-  UserProfile get pharmacyProfile => _pharmacyProfile;
-
-  UserProfile get patientProfile => _patientProfile;
-
-  List<Medicine> medicinesByPharmacy(String id) =>
-      _medicines.where((medicine) => medicine.pharmacyId == id).toList();
-
   void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.light
-        ? ThemeMode.dark
-        : ThemeMode.light;
+    _themeMode =
+        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
   }
 
@@ -181,62 +78,65 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addMedicine(Medicine medicine) {
-    _medicines.add(medicine);
-    notifyListeners();
-  }
+  // ── User & profile data ──
 
-  void updateMedicine(Medicine medicine) {
-    final index = _medicines.indexWhere((item) => item.id == medicine.id);
-    if (index != -1) {
-      _medicines[index] = medicine;
-      notifyListeners();
-    }
-  }
+  UserProfile _profile = const UserProfile(
+    username: '',
+    email: '',
+    phone: '',
+    bio: '',
+    avatarPath: 'assets/avatars/avatar_wave.svg',
+    useAsset: true,
+  );
+  UserType _currentUserType = UserType.patient;
 
-  void deleteMedicine(String id) {
-    _medicines.removeWhere((item) => item.id == id);
-    notifyListeners();
-  }
+  UserType get currentUserType => _currentUserType;
+  UserProfile get pharmacyProfile => _profile;
+  UserProfile get patientProfile => _profile;
 
-  void updateProfile(UserType type, UserProfile profile) {
-    if (type == UserType.pharmacy) {
-      _pharmacyProfile = profile;
-    } else {
-      _patientProfile = profile;
-    }
-    notifyListeners();
-  }
+  // ── Pharmacy data ──
 
-  Future<GeoPoint> detectLocation() => _locationService.detectUserPosition();
+  Map<String, Pharmacy> _pharmacies = {};
+  String? _primaryPharmacyId;
+
+  final GeoPoint patientLocation = const GeoPoint(lat: 3.876, lng: 11.514);
+
+  String get primaryPharmacyId => _primaryPharmacyId ?? '';
+
+  Pharmacy get primaryPharmacy => _pharmacies[_primaryPharmacyId]!;
+
+  Pharmacy pharmacyById(String id) => _pharmacies[id]!;
+
+  List<Pharmacy> get pharmacies => _pharmacies.values.toList(growable: false);
+
+  // ── Medicine data ──
+
+  List<Medicine> _medicines = [];
+
+  List<Medicine> get medicines => List.unmodifiable(_medicines);
+
+  List<Medicine> medicinesByPharmacy(String id) =>
+      _medicines.where((m) => m.pharmacyId == id).toList();
+
+  // ── Medicine request data ──
+
+  List<MedicineRequest> _requests = [];
+
+  List<MedicineRequest> get medicineRequests => List.unmodifiable(_requests);
+
+  // ── Distance calculation ──
 
   double distanceFromPatient(String pharmacyId) {
-    final pharmacy = pharmacyById(pharmacyId);
+    final pharmacy = _pharmacies[pharmacyId];
+    if (pharmacy == null) return 0;
     return _distanceBetween(patientLocation, pharmacy.point);
-  }
-
-  Medicine _seedMedicine(
-    String id,
-    String name,
-    double price,
-    String pharmacyId,
-  ) {
-    final distance = distanceFromPatient(pharmacyId);
-    return Medicine(
-      id: id,
-      name: name,
-      price: price,
-      pharmacyId: pharmacyId,
-      distanceKm: double.parse(distance.toStringAsFixed(1)),
-    );
   }
 
   double _distanceBetween(GeoPoint a, GeoPoint b) {
     const radius = 6371; // km
     final dLat = _degToRad(b.lat - a.lat);
     final dLng = _degToRad(b.lng - a.lng);
-    final aa =
-        math.sin(dLat / 2) * math.sin(dLat / 2) +
+    final aa = math.sin(dLat / 2) * math.sin(dLat / 2) +
         math.cos(_degToRad(a.lat)) *
             math.cos(_degToRad(b.lat)) *
             math.sin(dLng / 2) *
@@ -246,4 +146,179 @@ class AppState extends ChangeNotifier {
   }
 
   double _degToRad(double value) => value * math.pi / 180;
+
+  Future<GeoPoint> detectLocation() => _locationService.detectUserPosition();
+
+  // ── Initialization ──
+
+  Future<void> init() async {
+    await _api.loadToken();
+    if (_api.hasToken) {
+      try {
+        await _loadUserData();
+        _isLoggedIn = true;
+      } catch (_) {
+        await _api.clearToken();
+      }
+    }
+    _initialized = true;
+    notifyListeners();
+  }
+
+  // ── Auth ──
+
+  Future<void> login(String username, String password) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _api.login(username, password);
+      await _loadUserData();
+      _isLoggedIn = true;
+    } on ApiException catch (e) {
+      _error = e.message;
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> register({
+    required String username,
+    required String email,
+    required String phone,
+    required String password,
+    required UserType userType,
+  }) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      await _api.register(
+        username: username,
+        email: email,
+        phone: phone,
+        password: password,
+        userType: userType == UserType.pharmacy ? 'pharmacy' : 'patient',
+      );
+    } on ApiException catch (e) {
+      _error = e.message;
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> logout() async {
+    await _api.clearToken();
+    _isLoggedIn = false;
+    _pharmacies = {};
+    _medicines = [];
+    _requests = [];
+    _primaryPharmacyId = null;
+    _profile = const UserProfile(
+      username: '',
+      email: '',
+      phone: '',
+      bio: '',
+      avatarPath: 'assets/avatars/avatar_wave.svg',
+      useAsset: true,
+    );
+    notifyListeners();
+  }
+
+  Future<void> _loadUserData() async {
+    final profileData = await _api.getProfile();
+    _profile = UserProfile.fromJson(profileData);
+    _currentUserType = _profile.userType == 'pharmacy'
+        ? UserType.pharmacy
+        : UserType.patient;
+
+    await loadPharmacies();
+    await loadMedicines();
+    await loadMedicineRequests();
+
+    if (_currentUserType == UserType.pharmacy) {
+      final userId = _api.userId;
+      _primaryPharmacyId = _pharmacies.values
+          .where((p) => p.userId == userId)
+          .map((p) => p.id)
+          .firstOrNull;
+    }
+  }
+
+  // ── Data loading ──
+
+  Future<void> loadPharmacies() async {
+    final data = await _api.getPharmacies();
+    _pharmacies = {
+      for (final json in data)
+        (json as Map<String, dynamic>)['id'].toString():
+            Pharmacy.fromJson(json),
+    };
+    notifyListeners();
+  }
+
+  Future<void> loadMedicines() async {
+    final data = await _api.getMedicines();
+    _medicines = data.map((json) {
+      final map = json as Map<String, dynamic>;
+      final pharmacyId = map['pharmacy_id'].toString();
+      final distance = _pharmacies.containsKey(pharmacyId)
+          ? distanceFromPatient(pharmacyId)
+          : 0.0;
+      return Medicine.fromJson(map,
+          distanceKm: double.parse(distance.toStringAsFixed(1)));
+    }).toList();
+    notifyListeners();
+  }
+
+  Future<void> loadMedicineRequests() async {
+    final data = await _api.getMedicineRequests();
+    _requests = data
+        .map((json) => MedicineRequest.fromJson(json as Map<String, dynamic>))
+        .toList();
+    notifyListeners();
+  }
+
+  // ── Medicine CRUD ──
+
+  Future<void> addMedicine(Medicine medicine) async {
+    final json = await _api.addMedicine(medicine.name, medicine.price);
+    final pharmacyId = json['pharmacy_id'].toString();
+    final distance = _pharmacies.containsKey(pharmacyId)
+        ? distanceFromPatient(pharmacyId)
+        : 0.0;
+    _medicines.add(Medicine.fromJson(json,
+        distanceKm: double.parse(distance.toStringAsFixed(1))));
+    notifyListeners();
+  }
+
+  Future<void> updateMedicine(Medicine medicine) async {
+    await _api.updateMedicine(
+        int.parse(medicine.id), medicine.name, medicine.price);
+    final index = _medicines.indexWhere((m) => m.id == medicine.id);
+    if (index != -1) {
+      _medicines[index] = medicine;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteMedicine(String id) async {
+    await _api.deleteMedicine(int.parse(id));
+    _medicines.removeWhere((m) => m.id == id);
+    notifyListeners();
+  }
+
+  // ── Profile ──
+
+  Future<void> updateProfile(UserType type, UserProfile profile) async {
+    await _api.updateProfile(profile.toJson());
+    _profile = profile;
+    notifyListeners();
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/context_extensions.dart';
 import '../models/user_type.dart';
+import '../services/api_service.dart';
 import '../widgets/language_toggle.dart';
 import '../widgets/theme_toggle_button.dart';
 import 'patient_dashboard_screen.dart';
@@ -20,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscure = true;
+  bool _loading = false;
 
   @override
   void dispose() {
@@ -148,7 +150,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
-                    onPressed: _handleLogin,
+                    onPressed: _loading ? null : _handleLogin,
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       textStyle: const TextStyle(
@@ -156,7 +158,13 @@ class _LoginScreenState extends State<LoginScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    child: Text(l10n.t('login_button')),
+                    child: _loading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Text(l10n.t('login_button')),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -184,7 +192,7 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(context.l10n.t('login_form_error'))),
@@ -192,11 +200,33 @@ class _LoginScreenState extends State<LoginScreen> {
       return;
     }
 
-    final userType = context.appState.loginType;
-    final destination = userType == UserType.pharmacy
-        ? const PharmacyDashboardScreen()
-        : const PatientDashboardScreen();
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => destination));
+    setState(() => _loading = true);
+
+    try {
+      final appState = context.appState;
+      await appState.login(
+        _usernameController.text.trim(),
+        _passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      final destination = appState.currentUserType == UserType.pharmacy
+          ? const PharmacyDashboardScreen()
+          : const PatientDashboardScreen();
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => destination),
+        (_) => false,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 }
 

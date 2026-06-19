@@ -148,7 +148,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  void _saveProfile() {
+  Future<void> _saveProfile() async {
     final updated = _baseProfile.copyWith(
       username: _usernameController.text.trim(),
       email: _emailController.text.trim(),
@@ -157,12 +157,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       avatarPath: _avatarPath,
       useAsset: _useAsset,
     );
-    context.appState.updateProfile(widget.userType, updated);
-    if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.l10n.t('profile_save'))));
-    Navigator.of(context).pop();
+    try {
+      await context.appState.updateProfile(widget.userType, updated);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.t('profile_save'))),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
   }
 }
 

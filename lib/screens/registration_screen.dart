@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/context_extensions.dart';
 import '../models/geo_point.dart';
+import '../services/api_service.dart';
 import '../widgets/language_toggle.dart';
 import '../widgets/theme_toggle_button.dart';
 
@@ -22,6 +23,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   bool _locating = false;
+  bool _submitting = false;
   GeoPoint? _detectedPoint;
 
   @override
@@ -206,11 +208,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: _handleSubmit,
+                  onPressed: _submitting ? null : _handleSubmit,
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 18),
                   ),
-                  child: Text(l10n.t('register_button')),
+                  child: _submitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.t('register_button')),
                 ),
               ),
             ],
@@ -230,13 +238,32 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     });
   }
 
-  void _handleSubmit() {
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
+  Future<void> _handleSubmit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _submitting = true);
+
+    try {
+      await context.appState.register(
+        username: _usernameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _phoneController.text.trim(),
+        password: _passwordController.text,
+        userType: context.appState.loginType,
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.t('register_success'))),
+      );
+      Navigator.of(context).pop();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.l10n.t('register_success'))));
-    Navigator.of(context).pop();
   }
 }

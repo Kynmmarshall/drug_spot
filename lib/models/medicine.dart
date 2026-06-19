@@ -7,6 +7,16 @@ class Medicine {
     required this.distanceKm,
   });
 
+  factory Medicine.fromJson(Map<String, dynamic> json, {double distanceKm = 0}) {
+    return Medicine(
+      id: json['id'].toString(),
+      name: json['name'] as String,
+      price: (json['price'] as num).toDouble(),
+      pharmacyId: json['pharmacy_id'].toString(),
+      distanceKm: distanceKm,
+    );
+  }
+
   final String id;
   final String name;
   final double price;
