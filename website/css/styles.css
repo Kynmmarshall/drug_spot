@@ -94,9 +94,7 @@ nav.scrolled { box-shadow: 0 4px 30px rgba(79, 70, 229, 0.08); }
 }
 .logo-icon {
   width: 40px; height: 40px; border-radius: 14px;
-  background: linear-gradient(135deg, var(--indigo), var(--emerald));
-  display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 1.1rem;
+  object-fit: cover;
 }
 .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
 .nav-links a {
