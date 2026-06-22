@@ -7,6 +7,7 @@ import 'models/user_type.dart';
 import 'screens/login_screen.dart';
 import 'screens/patient_dashboard_screen.dart';
 import 'screens/pharmacy_dashboard_screen.dart';
+import 'screens/pharmacy_setup_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -70,6 +71,9 @@ class _DrugSpotAppState extends State<DrugSpotApp> {
     }
 
     if (_state.isLoggedIn) {
+      if (_state.currentUserType == UserType.pharmacy && !_state.hasPharmacy) {
+        return const PharmacySetupScreen();
+      }
       return _state.currentUserType == UserType.pharmacy
           ? const PharmacyDashboardScreen()
           : const PatientDashboardScreen();

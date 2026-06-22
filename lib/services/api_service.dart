@@ -14,24 +14,25 @@ class ApiException implements Exception {
 }
 
 class ApiService {
-  // For Android emulator use 10.0.2.2; for physical device use your PC's local IP
   static const String _defaultBaseUrl = 'http://10.0.2.2:3001';
-  static const String _tokenKey = 'jwt_token';
+  static const String _accessKey = 'access_token';
+  static const String _refreshKey = 'refresh_token';
 
   final String baseUrl;
   final http.Client _client;
-  String? _token;
+  String? _accessToken;
+  String? _refreshToken;
 
   ApiService({String? baseUrl, http.Client? client})
       : baseUrl = baseUrl ?? _defaultBaseUrl,
         _client = client ?? http.Client();
 
-  bool get hasToken => _token != null;
+  bool get hasToken => _accessToken != null;
 
   int? get userId {
-    if (_token == null) return null;
+    if (_accessToken == null) return null;
     try {
-      final parts = _token!.split('.');
+      final parts = _accessToken!.split('.');
       if (parts.length != 3) return null;
       final normalized = base64Url.normalize(parts[1]);
       final payload = utf8.decode(base64Url.decode(normalized));
@@ -44,48 +45,119 @@ class ApiService {
 
   Map<String, String> get _headers => {
         'Content-Type': 'application/json',
-        if (_token != null) 'Authorization': 'Bearer $_token',
+        if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
       };
 
   // ── Token persistence ──
 
   Future<void> loadToken() async {
     final prefs = await SharedPreferences.getInstance();
-    _token = prefs.getString(_tokenKey);
+    _accessToken = prefs.getString(_accessKey);
+    _refreshToken = prefs.getString(_refreshKey);
   }
 
-  Future<void> _saveToken(String token) async {
-    _token = token;
+  Future<void> _saveTokens(String access, String refresh) async {
+    _accessToken = access;
+    _refreshToken = refresh;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, token);
+    await prefs.setString(_accessKey, access);
+    await prefs.setString(_refreshKey, refresh);
   }
 
   Future<void> clearToken() async {
-    _token = null;
+    _accessToken = null;
+    _refreshToken = null;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_tokenKey);
+    await prefs.remove(_accessKey);
+    await prefs.remove(_refreshKey);
   }
 
   // ── HTTP helpers ──
 
-  Future<Map<String, dynamic>> _json(http.Response response) async {
+  Map<String, dynamic> _parseJson(http.Response response) {
     final body = jsonDecode(response.body);
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return body as Map<String, dynamic>;
     }
-    final message = body is Map
-        ? (body['error'] ?? body['detail'] ?? body.values.first?.toString() ?? 'Request failed')
-        : 'Request failed';
-    throw ApiException(message.toString(), response.statusCode);
+    String message;
+    if (body is Map) {
+      message = (body['error'] ??
+              body['detail'] ??
+              body.values.first?.toString() ??
+              'Request failed')
+          .toString();
+    } else {
+      message = 'Request failed';
+    }
+    throw ApiException(message, response.statusCode);
   }
 
-  Future<List<dynamic>> _jsonList(http.Response response) async {
+  List<dynamic> _parseJsonList(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
       return jsonDecode(response.body) as List<dynamic>;
     }
     final body = jsonDecode(response.body);
-    final message = body is Map ? (body['error'] ?? body['detail'] ?? 'Request failed') : 'Request failed';
-    throw ApiException(message.toString(), response.statusCode);
+    final message = body is Map
+        ? (body['error'] ?? body['detail'] ?? 'Request failed').toString()
+        : 'Request failed';
+    throw ApiException(message, response.statusCode);
+  }
+
+  Future<http.Response> _authGet(Uri uri) async {
+    var response = await _client.get(uri, headers: _headers);
+    if (response.statusCode == 401 && await _tryRefresh()) {
+      response = await _client.get(uri, headers: _headers);
+    }
+    return response;
+  }
+
+  Future<http.Response> _authPost(Uri uri, {Object? body}) async {
+    var response =
+        await _client.post(uri, headers: _headers, body: body);
+    if (response.statusCode == 401 && await _tryRefresh()) {
+      response =
+          await _client.post(uri, headers: _headers, body: body);
+    }
+    return response;
+  }
+
+  Future<http.Response> _authPut(Uri uri, {Object? body}) async {
+    var response =
+        await _client.put(uri, headers: _headers, body: body);
+    if (response.statusCode == 401 && await _tryRefresh()) {
+      response =
+          await _client.put(uri, headers: _headers, body: body);
+    }
+    return response;
+  }
+
+  Future<http.Response> _authDelete(Uri uri) async {
+    var response = await _client.delete(uri, headers: _headers);
+    if (response.statusCode == 401 && await _tryRefresh()) {
+      response = await _client.delete(uri, headers: _headers);
+    }
+    return response;
+  }
+
+  Future<bool> _tryRefresh() async {
+    if (_refreshToken == null) return false;
+    try {
+      final response = await _client.post(
+        Uri.parse('$baseUrl/api/refresh'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'refresh': _refreshToken}),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final newAccess = data['access'] as String;
+        _accessToken = newAccess;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_accessKey, newAccess);
+        return true;
+      }
+    } catch (_) {}
+    await clearToken();
+    return false;
   }
 
   // ── Auth ──
@@ -99,7 +171,7 @@ class ApiService {
   }) async {
     final response = await _client.post(
       Uri.parse('$baseUrl/api/register'),
-      headers: _headers,
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'username': username,
         'email': email,
@@ -108,110 +180,123 @@ class ApiService {
         'user_type': userType,
       }),
     );
-    return _json(response);
+    final data = _parseJson(response);
+    await _saveTokens(data['access'] as String, data['refresh'] as String);
+    return data;
   }
 
-  Future<String> login(String username, String password) async {
+  Future<Map<String, dynamic>> login(String username, String password) async {
     final response = await _client.post(
       Uri.parse('$baseUrl/api/login'),
-      headers: _headers,
+      headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'username': username, 'password': password}),
     );
-    final data = await _json(response);
-    final token = data['token'] as String;
-    await _saveToken(token);
-    return token;
+    final data = _parseJson(response);
+    await _saveTokens(data['access'] as String, data['refresh'] as String);
+    return data;
+  }
+
+  Future<void> logout() async {
+    if (_refreshToken != null) {
+      try {
+        await _authPost(
+          Uri.parse('$baseUrl/api/logout'),
+          body: jsonEncode({'refresh': _refreshToken}),
+        );
+      } catch (_) {}
+    }
+    await clearToken();
   }
 
   // ── Profile ──
 
   Future<Map<String, dynamic>> getProfile() async {
-    final response = await _client.get(
-      Uri.parse('$baseUrl/api/profile'),
-      headers: _headers,
-    );
-    return _json(response);
+    final response = await _authGet(Uri.parse('$baseUrl/api/profile'));
+    return _parseJson(response);
   }
 
-  Future<void> updateProfile(Map<String, dynamic> data) async {
-    final response = await _client.put(
+  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
+    final response = await _authPut(
       Uri.parse('$baseUrl/api/profile'),
-      headers: _headers,
       body: jsonEncode(data),
     );
-    await _json(response);
+    return _parseJson(response);
   }
 
   // ── Pharmacies ──
 
   Future<List<dynamic>> getPharmacies() async {
-    final response = await _client.get(
-      Uri.parse('$baseUrl/api/pharmacies/'),
-      headers: _headers,
-    );
-    return _jsonList(response);
+    final response = await _authGet(Uri.parse('$baseUrl/api/pharmacies/'));
+    return _parseJsonList(response);
   }
 
   Future<Map<String, dynamic>> getPharmacyById(int id) async {
-    final response = await _client.get(
-      Uri.parse('$baseUrl/api/pharmacies/$id'),
-      headers: _headers,
+    final response = await _authGet(Uri.parse('$baseUrl/api/pharmacies/$id'));
+    return _parseJson(response);
+  }
+
+  Future<Map<String, dynamic>> createPharmacy({
+    required String name,
+    required String address,
+    required double lat,
+    required double lng,
+    required String phone,
+    String? accent,
+  }) async {
+    final response = await _authPost(
+      Uri.parse('$baseUrl/api/pharmacies/'),
+      body: jsonEncode({
+        'name': name,
+        'address': address,
+        'lat': lat,
+        'lng': lng,
+        'phone': phone,
+        if (accent != null) 'accent': accent,
+      }),
     );
-    return _json(response);
+    return _parseJson(response);
   }
 
   // ── Medicines ──
 
   Future<List<dynamic>> getMedicines() async {
-    final response = await _client.get(
-      Uri.parse('$baseUrl/api/medicines/'),
-      headers: _headers,
-    );
-    return _jsonList(response);
+    final response = await _authGet(Uri.parse('$baseUrl/api/medicines/'));
+    return _parseJsonList(response);
   }
 
   Future<List<dynamic>> getMedicinesByPharmacy(int pharmacyId) async {
-    final response = await _client.get(
-      Uri.parse('$baseUrl/api/medicines/pharmacy/$pharmacyId'),
-      headers: _headers,
-    );
-    return _jsonList(response);
+    final response =
+        await _authGet(Uri.parse('$baseUrl/api/medicines/pharmacy/$pharmacyId'));
+    return _parseJsonList(response);
   }
 
   Future<Map<String, dynamic>> addMedicine(String name, double price) async {
-    final response = await _client.post(
+    final response = await _authPost(
       Uri.parse('$baseUrl/api/medicines/'),
-      headers: _headers,
       body: jsonEncode({'name': name, 'price': price}),
     );
-    return _json(response);
+    return _parseJson(response);
   }
 
   Future<void> updateMedicine(int id, String name, double price) async {
-    final response = await _client.put(
+    final response = await _authPut(
       Uri.parse('$baseUrl/api/medicines/$id'),
-      headers: _headers,
       body: jsonEncode({'name': name, 'price': price}),
     );
-    await _json(response);
+    _parseJson(response);
   }
 
   Future<void> deleteMedicine(int id) async {
-    final response = await _client.delete(
-      Uri.parse('$baseUrl/api/medicines/$id'),
-      headers: _headers,
-    );
-    await _json(response);
+    final response = await _authDelete(Uri.parse('$baseUrl/api/medicines/$id'));
+    _parseJson(response);
   }
 
   // ── Medicine Requests ──
 
   Future<List<dynamic>> getMedicineRequests() async {
-    final response = await _client.get(
-      Uri.parse('$baseUrl/api/medicine_requests/'),
-      headers: _headers,
-    );
-    return _jsonList(response);
+    final response =
+        await _authGet(Uri.parse('$baseUrl/api/medicine_requests/'));
+    return _parseJsonList(response);
   }
 
   Future<Map<String, dynamic>> addMedicineRequest({
@@ -221,9 +306,8 @@ class ApiService {
     String? avatarPath,
     bool useAsset = false,
   }) async {
-    final response = await _client.post(
+    final response = await _authPost(
       Uri.parse('$baseUrl/api/medicine_requests/'),
-      headers: _headers,
       body: jsonEncode({
         'username': username,
         'contact': contact,
@@ -232,6 +316,6 @@ class ApiService {
         'use_asset': useAsset,
       }),
     );
-    return _json(response);
+    return _parseJson(response);
   }
 }

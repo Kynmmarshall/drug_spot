@@ -37,6 +37,8 @@ class AppState extends ChangeNotifier {
   final ApiService _api;
   final LocationService _locationService;
 
+  ApiService get api => _api;
+
   // ── Initialization & auth state ──
 
   bool _initialized = false;
@@ -80,7 +82,7 @@ class AppState extends ChangeNotifier {
 
   // ── User & profile data ──
 
-  UserProfile _profile = const UserProfile(
+  static const _emptyProfile = UserProfile(
     username: '',
     email: '',
     phone: '',
@@ -88,6 +90,8 @@ class AppState extends ChangeNotifier {
     avatarPath: 'assets/avatars/avatar_wave.svg',
     useAsset: true,
   );
+
+  UserProfile _profile = _emptyProfile;
   UserType _currentUserType = UserType.patient;
 
   UserType get currentUserType => _currentUserType;
@@ -102,6 +106,7 @@ class AppState extends ChangeNotifier {
   final GeoPoint patientLocation = const GeoPoint(lat: 3.876, lng: 11.514);
 
   String get primaryPharmacyId => _primaryPharmacyId ?? '';
+  bool get hasPharmacy => _primaryPharmacyId != null;
 
   Pharmacy get primaryPharmacy => _pharmacies[_primaryPharmacyId]!;
 
@@ -133,7 +138,7 @@ class AppState extends ChangeNotifier {
   }
 
   double _distanceBetween(GeoPoint a, GeoPoint b) {
-    const radius = 6371; // km
+    const radius = 6371;
     final dLat = _degToRad(b.lat - a.lat);
     final dLng = _degToRad(b.lng - a.lng);
     final aa = math.sin(dLat / 2) * math.sin(dLat / 2) +
@@ -167,15 +172,23 @@ class AppState extends ChangeNotifier {
 
   // ── Auth ──
 
-  Future<void> login(String username, String password) async {
+  void _applyUserData(Map<String, dynamic> userData) {
+    _profile = UserProfile.fromJson(userData);
+    _currentUserType =
+        _profile.userType == 'pharmacy' ? UserType.pharmacy : UserType.patient;
+  }
+
+  Future<Map<String, dynamic>> login(String username, String password) async {
     _isLoading = true;
     _error = null;
     notifyListeners();
 
     try {
-      await _api.login(username, password);
-      await _loadUserData();
+      final data = await _api.login(username, password);
+      _applyUserData(data['user'] as Map<String, dynamic>);
+      await _loadAppData();
       _isLoggedIn = true;
+      return data;
     } on ApiException catch (e) {
       _error = e.message;
       rethrow;
@@ -185,7 +198,7 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<void> register({
+  Future<Map<String, dynamic>> register({
     required String username,
     required String email,
     required String phone,
@@ -197,13 +210,17 @@ class AppState extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _api.register(
+      final data = await _api.register(
         username: username,
         email: email,
         phone: phone,
         password: password,
         userType: userType == UserType.pharmacy ? 'pharmacy' : 'patient',
       );
+      _applyUserData(data['user'] as Map<String, dynamic>);
+      await _loadAppData();
+      _isLoggedIn = true;
+      return data;
     } on ApiException catch (e) {
       _error = e.message;
       rethrow;
@@ -214,30 +231,25 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> logout() async {
-    await _api.clearToken();
+    await _api.logout();
     _isLoggedIn = false;
     _pharmacies = {};
     _medicines = [];
     _requests = [];
     _primaryPharmacyId = null;
-    _profile = const UserProfile(
-      username: '',
-      email: '',
-      phone: '',
-      bio: '',
-      avatarPath: 'assets/avatars/avatar_wave.svg',
-      useAsset: true,
-    );
+    _profile = _emptyProfile;
     notifyListeners();
   }
 
   Future<void> _loadUserData() async {
     final profileData = await _api.getProfile();
     _profile = UserProfile.fromJson(profileData);
-    _currentUserType = _profile.userType == 'pharmacy'
-        ? UserType.pharmacy
-        : UserType.patient;
+    _currentUserType =
+        _profile.userType == 'pharmacy' ? UserType.pharmacy : UserType.patient;
+    await _loadAppData();
+  }
 
+  Future<void> _loadAppData() async {
     await loadPharmacies();
     await loadMedicines();
     await loadMedicineRequests();
@@ -249,6 +261,28 @@ class AppState extends ChangeNotifier {
           .map((p) => p.id)
           .firstOrNull;
     }
+  }
+
+  // ── Pharmacy creation ──
+
+  Future<void> createPharmacy({
+    required String name,
+    required String address,
+    required double lat,
+    required double lng,
+    required String phone,
+  }) async {
+    final json = await _api.createPharmacy(
+      name: name,
+      address: address,
+      lat: lat,
+      lng: lng,
+      phone: phone,
+    );
+    final pharmacy = Pharmacy.fromJson(json);
+    _pharmacies[pharmacy.id] = pharmacy;
+    _primaryPharmacyId = pharmacy.id;
+    notifyListeners();
   }
 
   // ── Data loading ──
@@ -317,8 +351,8 @@ class AppState extends ChangeNotifier {
   // ── Profile ──
 
   Future<void> updateProfile(UserType type, UserProfile profile) async {
-    await _api.updateProfile(profile.toJson());
-    _profile = profile;
+    final data = await _api.updateProfile(profile.toJson());
+    _profile = UserProfile.fromJson(data);
     notifyListeners();
   }
 }

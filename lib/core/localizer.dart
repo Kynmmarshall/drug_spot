@@ -104,6 +104,19 @@ class Localizer {
       'med_created': 'Medicine added successfully.',
       'med_updated': 'Medicine updated successfully.',
       'med_deleted': 'Medicine removed.',
+      'pharmacy_setup_title': 'Set up your pharmacy',
+      'pharmacy_setup_welcome': 'Welcome, pharmacist!',
+      'pharmacy_setup_subtitle':
+          'Register your pharmacy so patients can find you on the map.',
+      'pharmacy_setup_name': 'Pharmacy name',
+      'pharmacy_setup_name_error': 'Pharmacy name is required',
+      'pharmacy_setup_address': 'Street address',
+      'pharmacy_setup_address_error': 'Address is required',
+      'pharmacy_setup_location_hint':
+          'Detect your pharmacy coordinates so patients can locate you.',
+      'pharmacy_setup_location_required':
+          'Please detect your location before submitting.',
+      'pharmacy_setup_submit': 'Create pharmacy',
     },
     AppLanguage.fr: {
       'login_title': 'Trouvez une pharmacie fiable près de vous',
@@ -203,6 +216,19 @@ class Localizer {
       'med_created': 'Médicament ajouté.',
       'med_updated': 'Médicament mis à jour.',
       'med_deleted': 'Médicament supprimé.',
+      'pharmacy_setup_title': 'Configurez votre pharmacie',
+      'pharmacy_setup_welcome': 'Bienvenue, pharmacien !',
+      'pharmacy_setup_subtitle':
+          'Enregistrez votre pharmacie pour que les patients vous trouvent sur la carte.',
+      'pharmacy_setup_name': 'Nom de la pharmacie',
+      'pharmacy_setup_name_error': 'Le nom est obligatoire',
+      'pharmacy_setup_address': 'Adresse',
+      'pharmacy_setup_address_error': "L'adresse est obligatoire",
+      'pharmacy_setup_location_hint':
+          'Détectez les coordonnées de votre pharmacie pour être localisable.',
+      'pharmacy_setup_location_required':
+          'Veuillez détecter votre position avant de soumettre.',
+      'pharmacy_setup_submit': 'Créer la pharmacie',
     },
   };
 

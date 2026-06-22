@@ -7,6 +7,7 @@ import '../widgets/language_toggle.dart';
 import '../widgets/theme_toggle_button.dart';
 import 'patient_dashboard_screen.dart';
 import 'pharmacy_dashboard_screen.dart';
+import 'pharmacy_setup_screen.dart';
 import 'registration_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -211,9 +212,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
       if (!mounted) return;
 
-      final destination = appState.currentUserType == UserType.pharmacy
-          ? const PharmacyDashboardScreen()
-          : const PatientDashboardScreen();
+      final Widget destination;
+      if (appState.currentUserType == UserType.pharmacy && !appState.hasPharmacy) {
+        destination = const PharmacySetupScreen();
+      } else if (appState.currentUserType == UserType.pharmacy) {
+        destination = const PharmacyDashboardScreen();
+      } else {
+        destination = const PatientDashboardScreen();
+      }
 
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => destination),

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../core/context_extensions.dart';
 import '../models/geo_point.dart';
+import '../models/user_type.dart';
 import '../services/api_service.dart';
 import '../widgets/language_toggle.dart';
 import '../widgets/theme_toggle_button.dart';
+import 'patient_dashboard_screen.dart';
+import 'pharmacy_setup_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -244,19 +247,28 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     setState(() => _submitting = true);
 
     try {
-      await context.appState.register(
+      final appState = context.appState;
+      await appState.register(
         username: _usernameController.text.trim(),
         email: _emailController.text.trim(),
         phone: _phoneController.text.trim(),
         password: _passwordController.text,
-        userType: context.appState.loginType,
+        userType: appState.loginType,
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.t('register_success'))),
+
+      final Widget destination;
+      if (appState.currentUserType == UserType.pharmacy) {
+        destination = const PharmacySetupScreen();
+      } else {
+        destination = const PatientDashboardScreen();
+      }
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => destination),
+        (_) => false,
       );
-      Navigator.of(context).pop();
     } on ApiException catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
