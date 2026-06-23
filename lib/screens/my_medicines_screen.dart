@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../core/context_extensions.dart';
 import '../models/medicine.dart';
-import '../widgets/language_toggle.dart';
 import '../widgets/medicine_form_sheet.dart';
 import '../widgets/medicine_tile.dart';
-import '../widgets/theme_toggle_button.dart';
 import 'medicine_detail_screen.dart';
 
 class MyMedicinesScreen extends StatelessWidget {
@@ -15,50 +13,75 @@ class MyMedicinesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = context.appState;
     final l10n = context.l10n;
+    final theme = Theme.of(context);
+
+    if (!appState.hasPharmacy) {
+      return Scaffold(
+        appBar: AppBar(title: Text(l10n.t('my_medicines_title'))),
+        body: _EmptyState(message: l10n.t('my_medicines_empty')),
+      );
+    }
+
     final owned = appState.medicinesByPharmacy(appState.primaryPharmacyId);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.t('my_medicines_title')),
-        actions: const [LanguageToggle(dense: true), ThemeToggleButton()],
-      ),
+      appBar: AppBar(title: Text(l10n.t('my_medicines_title'))),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openMedicineSheet(context),
         icon: const Icon(Icons.add_rounded),
         label: Text(l10n.t('add_medicine')),
       ),
-      body: owned.isEmpty
-          ? _EmptyState(message: l10n.t('my_medicines_empty'))
-          : ListView(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
-              children: owned
-                  .map(
-                    (medicine) => MedicineTile(
-                      medicine: medicine,
-                      pharmacy: appState.primaryPharmacy,
-                      onTap: () => _openDetails(context, medicine),
-                      trailingActions: MedicineTileActions(
-                        onEdit: () =>
-                            _openMedicineSheet(context, medicine: medicine),
-                        onDelete: () async {
-                          try {
-                            await appState.deleteMedicine(medicine.id);
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(l10n.t('med_deleted'))),
-                            );
-                          } catch (e) {
-                            if (!context.mounted) return;
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString())),
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
+      body: _buildBody(context, appState, l10n, theme, owned),
+    );
+  }
+
+  Widget _buildBody(
+    BuildContext context,
+    dynamic appState,
+    dynamic l10n,
+    ThemeData theme,
+    List<Medicine> owned,
+  ) {
+    if (appState.dataLoading && owned.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (owned.isEmpty) {
+      return _EmptyState(message: l10n.t('my_medicines_empty'));
+    }
+
+    return RefreshIndicator(
+      onRefresh: () => appState.refreshData(),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 96),
+        children: owned
+            .map(
+              (medicine) => MedicineTile(
+                medicine: medicine,
+                pharmacy: appState.primaryPharmacy,
+                onTap: () => _openDetails(context, medicine),
+                trailingActions: MedicineTileActions(
+                  onEdit: () =>
+                      _openMedicineSheet(context, medicine: medicine),
+                  onDelete: () async {
+                    try {
+                      await appState.deleteMedicine(medicine.id);
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(l10n.t('med_deleted'))),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    }
+                  },
+                ),
+              ),
+            )
+            .toList(),
+      ),
     );
   }
 

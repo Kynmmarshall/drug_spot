@@ -51,6 +51,14 @@ class AppState extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  // ── Data loading state ──
+
+  bool _dataLoading = false;
+  String? _dataError;
+
+  bool get dataLoading => _dataLoading;
+  String? get dataError => _dataError;
+
   // ── UI-only state ──
 
   ThemeMode _themeMode = ThemeMode.light;
@@ -103,7 +111,11 @@ class AppState extends ChangeNotifier {
   Map<String, Pharmacy> _pharmacies = {};
   String? _primaryPharmacyId;
 
-  final GeoPoint patientLocation = const GeoPoint(lat: 3.876, lng: 11.514);
+  GeoPoint _userLocation = const GeoPoint(lat: 3.876, lng: 11.514);
+  bool _locationDetected = false;
+
+  GeoPoint get userLocation => _userLocation;
+  bool get locationDetected => _locationDetected;
 
   String get primaryPharmacyId => _primaryPharmacyId ?? '';
   bool get hasPharmacy => _primaryPharmacyId != null;
@@ -134,7 +146,7 @@ class AppState extends ChangeNotifier {
   double distanceFromPatient(String pharmacyId) {
     final pharmacy = _pharmacies[pharmacyId];
     if (pharmacy == null) return 0;
-    return _distanceBetween(patientLocation, pharmacy.point);
+    return _distanceBetween(_userLocation, pharmacy.point);
   }
 
   double _distanceBetween(GeoPoint a, GeoPoint b) {
@@ -152,7 +164,22 @@ class AppState extends ChangeNotifier {
 
   double _degToRad(double value) => value * math.pi / 180;
 
-  Future<GeoPoint> detectLocation() => _locationService.detectUserPosition();
+  Future<GeoPoint> detectLocation() async {
+    final point = await _locationService.detectUserPosition();
+    _userLocation = point;
+    _locationDetected = true;
+    notifyListeners();
+    return point;
+  }
+
+  Future<void> updateUserLocation() async {
+    try {
+      await detectLocation();
+      if (_medicines.isNotEmpty) {
+        await loadMedicines();
+      }
+    } catch (_) {}
+  }
 
   // ── Initialization ──
 
@@ -238,6 +265,7 @@ class AppState extends ChangeNotifier {
     _requests = [];
     _primaryPharmacyId = null;
     _profile = _emptyProfile;
+    _dataError = null;
     notifyListeners();
   }
 
@@ -250,16 +278,48 @@ class AppState extends ChangeNotifier {
   }
 
   Future<void> _loadAppData() async {
-    await loadPharmacies();
-    await loadMedicines();
-    await loadMedicineRequests();
+    _dataLoading = true;
+    _dataError = null;
+    notifyListeners();
 
-    if (_currentUserType == UserType.pharmacy) {
-      final userId = _api.userId;
-      _primaryPharmacyId = _pharmacies.values
-          .where((p) => p.userId == userId)
-          .map((p) => p.id)
-          .firstOrNull;
+    try {
+      await loadPharmacies();
+      await loadMedicines();
+      await loadMedicineRequests();
+
+      if (_currentUserType == UserType.pharmacy) {
+        final userId = _api.userId;
+        _primaryPharmacyId = _pharmacies.values
+            .where((p) => p.userId == userId)
+            .map((p) => p.id)
+            .firstOrNull;
+      }
+    } on ApiException catch (e) {
+      _dataError = e.message;
+    } catch (e) {
+      _dataError = e.toString();
+    } finally {
+      _dataLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> refreshData() async {
+    _dataLoading = true;
+    _dataError = null;
+    notifyListeners();
+
+    try {
+      await loadPharmacies();
+      await loadMedicines();
+      await loadMedicineRequests();
+    } on ApiException catch (e) {
+      _dataError = e.message;
+    } catch (e) {
+      _dataError = e.toString();
+    } finally {
+      _dataLoading = false;
+      notifyListeners();
     }
   }
 
@@ -319,33 +379,64 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ── Medicine CRUD ──
+  // ── Medicine CRUD (optimistic with rollback) ──
 
   Future<void> addMedicine(Medicine medicine) async {
-    final json = await _api.addMedicine(medicine.name, medicine.price);
-    final pharmacyId = json['pharmacy_id'].toString();
-    final distance = _pharmacies.containsKey(pharmacyId)
-        ? distanceFromPatient(pharmacyId)
-        : 0.0;
-    _medicines.add(Medicine.fromJson(json,
-        distanceKm: double.parse(distance.toStringAsFixed(1))));
+    _medicines.add(medicine);
     notifyListeners();
+
+    try {
+      final json = await _api.addMedicine(medicine.name, medicine.price);
+      final pharmacyId = json['pharmacy_id'].toString();
+      final distance = _pharmacies.containsKey(pharmacyId)
+          ? distanceFromPatient(pharmacyId)
+          : 0.0;
+      final serverMedicine = Medicine.fromJson(json,
+          distanceKm: double.parse(distance.toStringAsFixed(1)));
+      final index = _medicines.indexWhere((m) => m.id == medicine.id);
+      if (index != -1) {
+        _medicines[index] = serverMedicine;
+      }
+      notifyListeners();
+    } catch (_) {
+      _medicines.removeWhere((m) => m.id == medicine.id);
+      notifyListeners();
+      rethrow;
+    }
   }
 
   Future<void> updateMedicine(Medicine medicine) async {
-    await _api.updateMedicine(
-        int.parse(medicine.id), medicine.name, medicine.price);
     final index = _medicines.indexWhere((m) => m.id == medicine.id);
-    if (index != -1) {
-      _medicines[index] = medicine;
+    if (index == -1) return;
+
+    final previous = _medicines[index];
+    _medicines[index] = medicine;
+    notifyListeners();
+
+    try {
+      await _api.updateMedicine(
+          int.parse(medicine.id), medicine.name, medicine.price);
+    } catch (_) {
+      _medicines[index] = previous;
       notifyListeners();
+      rethrow;
     }
   }
 
   Future<void> deleteMedicine(String id) async {
-    await _api.deleteMedicine(int.parse(id));
-    _medicines.removeWhere((m) => m.id == id);
+    final index = _medicines.indexWhere((m) => m.id == id);
+    if (index == -1) return;
+
+    final removed = _medicines.removeAt(index);
     notifyListeners();
+
+    try {
+      await _api.deleteMedicine(int.parse(id));
+    } catch (_) {
+      _medicines.insert(index, removed);
+      notifyListeners();
+      rethrow;
+    }
   }
 
   // ── Profile ──

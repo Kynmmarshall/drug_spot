@@ -14,7 +14,7 @@ class ApiException implements Exception {
 }
 
 class ApiService {
-  static const String _defaultBaseUrl = 'http://10.0.2.2:3001';
+  static const String _defaultBaseUrl = 'https://drug-spot.duckdns.org';
   static const String _accessKey = 'access_token';
   static const String _refreshKey = 'refresh_token';
 

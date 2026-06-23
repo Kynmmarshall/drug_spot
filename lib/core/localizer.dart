@@ -117,6 +117,18 @@ class Localizer {
       'pharmacy_setup_location_required':
           'Please detect your location before submitting.',
       'pharmacy_setup_submit': 'Create pharmacy',
+      'settings_title': 'Settings',
+      'settings_subtitle': 'Customize your app experience.',
+      'settings_theme': 'Appearance',
+      'settings_theme_light': 'Light mode',
+      'settings_theme_dark': 'Dark mode',
+      'settings_language': 'Language',
+      'settings_logout': 'Log out',
+      'register_account_type': 'I am a',
+      'error_loading_data': 'Could not load data. Check your connection.',
+      'retry': 'Retry',
+      'profile_saved': 'Profile saved successfully.',
+      'profile_loaded_offline': 'Could not fetch latest profile. Showing cached data.',
     },
     AppLanguage.fr: {
       'login_title': 'Trouvez une pharmacie fiable près de vous',
@@ -229,6 +241,18 @@ class Localizer {
       'pharmacy_setup_location_required':
           'Veuillez détecter votre position avant de soumettre.',
       'pharmacy_setup_submit': 'Créer la pharmacie',
+      'settings_title': 'Paramètres',
+      'settings_subtitle': 'Personnalisez votre expérience.',
+      'settings_theme': 'Apparence',
+      'settings_theme_light': 'Mode clair',
+      'settings_theme_dark': 'Mode sombre',
+      'settings_language': 'Langue',
+      'settings_logout': 'Se déconnecter',
+      'register_account_type': 'Je suis',
+      'error_loading_data': 'Impossible de charger les données. Vérifiez votre connexion.',
+      'retry': 'Réessayer',
+      'profile_saved': 'Profil enregistré.',
+      'profile_loaded_offline': 'Impossible de récupérer le profil. Données en cache affichées.',
     },
   };
 

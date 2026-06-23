@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../core/context_extensions.dart';
 import '../models/user_profile.dart';
 import '../models/user_type.dart';
+import '../services/api_service.dart';
 import '../widgets/profile_avatar.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.userType});
@@ -23,7 +25,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late UserProfile _baseProfile;
   late String _avatarPath;
   bool _useAsset = true;
-  bool _initialized = false;
+  bool _loading = true;
+  bool _saving = false;
+  String? _loadError;
 
   static const List<String> _avatarOptions = [
     'assets/avatars/avatar_wave.svg',
@@ -39,22 +43,51 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _emailController = TextEditingController();
     _phoneController = TextEditingController();
     _bioController = TextEditingController();
+    _fetchProfile();
   }
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_initialized) return;
-    _baseProfile = widget.userType == UserType.pharmacy
-        ? context.appState.pharmacyProfile
-        : context.appState.patientProfile;
-    _usernameController.text = _baseProfile.username;
-    _emailController.text = _baseProfile.email;
-    _phoneController.text = _baseProfile.phone;
-    _bioController.text = _baseProfile.bio;
-    _avatarPath = _baseProfile.avatarPath;
-    _useAsset = _baseProfile.useAsset;
-    _initialized = true;
+  Future<void> _fetchProfile() async {
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
+
+    try {
+      final data = await context.appState.api.getProfile();
+      final profile = UserProfile.fromJson(data);
+      _applyProfile(profile);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _applyProfile(
+        widget.userType == UserType.pharmacy
+            ? context.appState.pharmacyProfile
+            : context.appState.patientProfile,
+      );
+      setState(() => _loadError = e.message);
+    } catch (_) {
+      if (!mounted) return;
+      _applyProfile(
+        widget.userType == UserType.pharmacy
+            ? context.appState.pharmacyProfile
+            : context.appState.patientProfile,
+      );
+    }
+  }
+
+  void _applyProfile(UserProfile profile) {
+    if (!mounted) return;
+    setState(() {
+      _baseProfile = profile;
+      _usernameController.text = profile.username;
+      _emailController.text = profile.email;
+      _phoneController.text = profile.phone;
+      _bioController.text = profile.bio;
+      _avatarPath = profile.avatarPath.isEmpty
+          ? 'assets/avatars/avatar_wave.svg'
+          : profile.avatarPath;
+      _useAsset = profile.useAsset || profile.avatarPath.startsWith('assets/');
+      _loading = false;
+    });
   }
 
   @override
@@ -70,98 +103,160 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(title: Text(l10n.userTypeLabel(widget.userType))),
-      body: ListView(
-        padding: const EdgeInsets.all(24),
-        children: [
-          Text(
-            l10n.t(
-              widget.userType == UserType.pharmacy
-                  ? 'profile_title_pharmacy'
-                  : 'profile_title_patient',
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.all(24),
+              children: [
+                if (_loadError != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline,
+                            color: theme.colorScheme.onErrorContainer, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            l10n.t('profile_loaded_offline'),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onErrorContainer,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                Text(
+                  l10n.t(
+                    widget.userType == UserType.pharmacy
+                        ? 'profile_title_pharmacy'
+                        : 'profile_title_patient',
+                  ),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  l10n.t(
+                    widget.userType == UserType.pharmacy
+                        ? 'profile_subtitle_pharmacy'
+                        : 'profile_subtitle_patient',
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Center(
+                  child: ProfileAvatar(
+                    path: _avatarPath,
+                    useAsset: _useAsset,
+                    radius: 52,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _AvatarPicker(
+                  options: _avatarOptions,
+                  selectedPath: _avatarPath,
+                  onSelect: (path) => setState(() {
+                    _avatarPath = path;
+                    _useAsset = true;
+                  }),
+                ),
+                const SizedBox(height: 24),
+                TextField(
+                  controller: _usernameController,
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: l10n.t('input_username'),
+                    helperText: l10n.t('profile_username_helper'),
+                    suffixIcon: const Icon(Icons.lock_outline, size: 18),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _emailController,
+                  decoration:
+                      InputDecoration(labelText: l10n.t('input_email')),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _phoneController,
+                  decoration: InputDecoration(
+                    labelText: l10n.t('input_phone'),
+                    helperText: l10n.t('profile_phone_helper'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _bioController,
+                  maxLines: 3,
+                  decoration:
+                      InputDecoration(labelText: l10n.t('profile_bio')),
+                ),
+                const SizedBox(height: 24),
+                FilledButton(
+                  onPressed: _saving ? null : _saveProfile,
+                  child: _saving
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.t('profile_save')),
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton.icon(
+                  onPressed: _handleLogout,
+                  icon: const Icon(Icons.logout_rounded),
+                  label: Text(l10n.t('settings_logout')),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                    side: BorderSide(
+                        color:
+                            theme.colorScheme.error.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ],
             ),
-            style: theme.textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            l10n.t(
-              widget.userType == UserType.pharmacy
-                  ? 'profile_subtitle_pharmacy'
-                  : 'profile_subtitle_patient',
-            ),
-          ),
-          const SizedBox(height: 24),
-          Center(
-            child: ProfileAvatar(
-              path: _avatarPath,
-              useAsset: _useAsset,
-              radius: 52,
-              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-            ),
-          ),
-          const SizedBox(height: 16),
-          _AvatarPicker(
-            options: _avatarOptions,
-            selectedPath: _avatarPath,
-            onSelect: (path) => setState(() {
-              _avatarPath = path;
-              _useAsset = true;
-            }),
-          ),
-          const SizedBox(height: 24),
-          TextField(
-            controller: _usernameController,
-            decoration: InputDecoration(
-              labelText: l10n.t('input_username'),
-              helperText: l10n.t('profile_username_helper'),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _emailController,
-            decoration: InputDecoration(labelText: l10n.t('input_email')),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _phoneController,
-            decoration: InputDecoration(
-              labelText: l10n.t('input_phone'),
-              helperText: l10n.t('profile_phone_helper'),
-            ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _bioController,
-            maxLines: 3,
-            decoration: InputDecoration(labelText: l10n.t('profile_bio')),
-          ),
-          const SizedBox(height: 24),
-          FilledButton(
-            onPressed: _saveProfile,
-            child: Text(l10n.t('profile_save')),
-          ),
-        ],
-      ),
+    );
+  }
+
+  Future<void> _handleLogout() async {
+    await context.appState.logout();
+    if (!mounted) return;
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (_) => false,
     );
   }
 
   Future<void> _saveProfile() async {
+    setState(() => _saving = true);
+
     final updated = _baseProfile.copyWith(
-      username: _usernameController.text.trim(),
       email: _emailController.text.trim(),
       phone: _phoneController.text.trim(),
       bio: _bioController.text.trim(),
       avatarPath: _avatarPath,
       useAsset: _useAsset,
     );
+
     try {
       await context.appState.updateProfile(widget.userType, updated);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.l10n.t('profile_save'))),
+        SnackBar(content: Text(context.l10n.t('profile_saved'))),
       );
       Navigator.of(context).pop();
     } catch (e) {
@@ -169,6 +264,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
       );
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 }

@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../core/context_extensions.dart';
 import '../models/user_type.dart';
 import '../services/api_service.dart';
-import '../widgets/language_toggle.dart';
-import '../widgets/theme_toggle_button.dart';
 import 'patient_dashboard_screen.dart';
 import 'pharmacy_dashboard_screen.dart';
 import 'pharmacy_setup_screen.dart';
@@ -54,15 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: const [
-                    LanguageToggle(),
-                    SizedBox(width: 12),
-                    ThemeToggleButton(),
-                  ],
-                ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 64),
                 Text(
                   l10n.t('login_title'),
                   style: theme.textTheme.headlineMedium?.copyWith(
@@ -77,38 +67,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
                   ),
                 ),
-                const SizedBox(height: 32),
-                Text(
-                  l10n.t('login_user_type'),
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SegmentedButton<UserType>(
-                  segments: UserType.values
-                      .map(
-                        (type) => ButtonSegment<UserType>(
-                          value: type,
-                          label: Text(l10n.userTypeLabel(type)),
-                          icon: Icon(type.icon, size: 18),
-                        ),
-                      )
-                      .toList(),
-                  selected: {context.appState.loginType},
-                  showSelectedIcon: false,
-                  style: ButtonStyle(
-                    textStyle: WidgetStateProperty.all(
-                      const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    padding: WidgetStateProperty.all(
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                    ),
-                  ),
-                  onSelectionChanged: (selection) =>
-                      context.appState.selectLoginType(selection.first),
-                ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 40),
                 Form(
                   key: _formKey,
                   child: Column(

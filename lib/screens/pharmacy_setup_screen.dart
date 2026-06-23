@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import '../core/context_extensions.dart';
 import '../models/geo_point.dart';
 import '../services/api_service.dart';
-import '../widgets/language_toggle.dart';
-import '../widgets/theme_toggle_button.dart';
 import 'pharmacy_dashboard_screen.dart';
 
 class PharmacySetupScreen extends StatefulWidget {
@@ -41,7 +39,7 @@ class _PharmacySetupScreenState extends State<PharmacySetupScreen> {
       appBar: AppBar(
         title: Text(l10n.t('pharmacy_setup_title')),
         automaticallyImplyLeading: false,
-        actions: const [LanguageToggle(dense: true), ThemeToggleButton()],
+        actions: const [],
       ),
       body: SafeArea(
         child: SingleChildScrollView(

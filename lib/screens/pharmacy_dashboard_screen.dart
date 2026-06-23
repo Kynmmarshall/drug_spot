@@ -4,17 +4,16 @@ import '../core/context_extensions.dart';
 import '../models/medicine.dart';
 import '../models/user_type.dart';
 import '../widgets/dashboard_action_bar.dart';
-import '../widgets/language_toggle.dart';
 import '../widgets/medicine_form_sheet.dart';
 import '../widgets/medicine_tile.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/section_card.dart';
-import '../widgets/theme_toggle_button.dart';
 import 'community_map_screen.dart';
 import 'medicine_detail_screen.dart';
 import 'profile_screen.dart';
 import 'my_medicines_screen.dart';
 import 'pharmacy_requests_screen.dart';
+import 'settings_screen.dart';
 
 class PharmacyDashboardScreen extends StatelessWidget {
   const PharmacyDashboardScreen({super.key});
@@ -62,8 +61,6 @@ class PharmacyDashboardScreen extends StatelessWidget {
       ),
       bottomNavigationBar: DashboardActionBar(
         children: [
-          const LanguageToggle(dense: true),
-          const ThemeToggleButton(),
           IconButton(
             tooltip: l10n.t('map_cta'),
             icon: const Icon(Icons.public_rounded),
@@ -73,6 +70,13 @@ class PharmacyDashboardScreen extends StatelessWidget {
             tooltip: l10n.t('my_medicines_title'),
             icon: const Icon(Icons.inventory_2_rounded),
             onPressed: () => _openMyMedicinesScreen(context),
+          ),
+          IconButton(
+            tooltip: l10n.t('settings_title'),
+            icon: const Icon(Icons.settings_rounded),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const SettingsScreen()),
+            ),
           ),
           InkWell(
             onTap: () => _openProfile(context),

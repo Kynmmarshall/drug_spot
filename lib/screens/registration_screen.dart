@@ -4,8 +4,6 @@ import '../core/context_extensions.dart';
 import '../models/geo_point.dart';
 import '../models/user_type.dart';
 import '../services/api_service.dart';
-import '../widgets/language_toggle.dart';
-import '../widgets/theme_toggle_button.dart';
 import 'patient_dashboard_screen.dart';
 import 'pharmacy_setup_screen.dart';
 
@@ -28,6 +26,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool _locating = false;
   bool _submitting = false;
   GeoPoint? _detectedPoint;
+  UserType _selectedType = UserType.patient;
 
   @override
   void dispose() {
@@ -46,10 +45,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final padding = MediaQuery.of(context).viewInsets.bottom + 24;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.t('register_title')),
-        actions: const [LanguageToggle(dense: true), ThemeToggleButton()],
-      ),
+      appBar: AppBar(title: Text(l10n.t('register_title'))),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(24, 24, 24, padding),
@@ -63,6 +59,43 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
               ),
               const SizedBox(height: 24),
+
+              // User type selector
+              Text(
+                l10n.t('register_account_type'),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<UserType>(
+                  segments: UserType.values
+                      .map(
+                        (type) => ButtonSegment<UserType>(
+                          value: type,
+                          label: Text(l10n.userTypeLabel(type)),
+                          icon: Icon(type.icon, size: 18),
+                        ),
+                      )
+                      .toList(),
+                  selected: {_selectedType},
+                  showSelectedIcon: false,
+                  style: ButtonStyle(
+                    textStyle: WidgetStateProperty.all(
+                      const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    padding: WidgetStateProperty.all(
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    ),
+                  ),
+                  onSelectionChanged: (selection) =>
+                      setState(() => _selectedType = selection.first),
+                ),
+              ),
+              const SizedBox(height: 24),
+
               Form(
                 key: _formKey,
                 child: Column(
@@ -253,7 +286,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         email: _emailController.text.trim(),
         phone: _phoneController.text.trim(),
         password: _passwordController.text,
-        userType: appState.loginType,
+        userType: _selectedType,
       );
 
       if (!mounted) return;
