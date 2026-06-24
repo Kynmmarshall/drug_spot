@@ -129,6 +129,10 @@ class Localizer {
       'retry': 'Retry',
       'profile_saved': 'Profile saved successfully.',
       'profile_loaded_offline': 'Could not fetch latest profile. Showing cached data.',
+      'profile_pharmacy_section': 'Pharmacy details',
+      'profile_pharmacy_hint': 'These details appear on the community map and medicine listings.',
+      'profile_pharmacy_phone': 'Pharmacy phone',
+      'profile_update_location': 'Update location',
     },
     AppLanguage.fr: {
       'login_title': 'Trouvez une pharmacie fiable près de vous',
@@ -253,6 +257,10 @@ class Localizer {
       'retry': 'Réessayer',
       'profile_saved': 'Profil enregistré.',
       'profile_loaded_offline': 'Impossible de récupérer le profil. Données en cache affichées.',
+      'profile_pharmacy_section': 'Détails de la pharmacie',
+      'profile_pharmacy_hint': 'Ces informations apparaissent sur la carte et les fiches médicaments.',
+      'profile_pharmacy_phone': 'Téléphone pharmacie',
+      'profile_update_location': 'Mettre à jour la position',
     },
   };
 

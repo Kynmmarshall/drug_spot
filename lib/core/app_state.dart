@@ -345,6 +345,27 @@ class AppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updatePharmacy({
+    required String name,
+    required String address,
+    required String phone,
+    double? lat,
+    double? lng,
+  }) async {
+    if (_primaryPharmacyId == null) return;
+    final data = <String, dynamic>{
+      'name': name,
+      'address': address,
+      'phone': phone,
+      if (lat != null) 'lat': lat,
+      if (lng != null) 'lng': lng,
+    };
+    final json = await _api.updatePharmacy(int.parse(_primaryPharmacyId!), data);
+    final updated = Pharmacy.fromJson(json);
+    _pharmacies[updated.id] = updated;
+    notifyListeners();
+  }
+
   // ── Data loading ──
 
   Future<void> loadPharmacies() async {

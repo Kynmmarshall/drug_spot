@@ -257,6 +257,14 @@ class ApiService {
     return _parseJson(response);
   }
 
+  Future<Map<String, dynamic>> updatePharmacy(int id, Map<String, dynamic> data) async {
+    final response = await _authPut(
+      Uri.parse('$baseUrl/api/pharmacies/$id'),
+      body: jsonEncode(data),
+    );
+    return _parseJson(response);
+  }
+
   // ── Medicines ──
 
   Future<List<dynamic>> getMedicines() async {
