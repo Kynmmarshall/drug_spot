@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "225608017978",
+    "project_id": "drug-spot",
+    "storage_bucket": "drug-spot.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:225608017978:android:ad8f29de323ac1d4706d03",
+        "android_client_info": {
+          "package_name": "com.example.drug_spot"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDWvJWv9aeTn4UULsFtyug4l4K5wm1DxRE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
