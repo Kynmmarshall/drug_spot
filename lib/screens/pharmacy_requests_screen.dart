@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../core/context_extensions.dart';
 import '../models/medicine_request.dart';
-import '../widgets/language_toggle.dart';
 import '../widgets/profile_avatar.dart';
-import '../widgets/theme_toggle_button.dart';
 
 class PharmacyRequestsScreen extends StatelessWidget {
   const PharmacyRequestsScreen({super.key});
@@ -19,7 +17,7 @@ class PharmacyRequestsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.t('requests_screen_title')),
-        actions: const [LanguageToggle(dense: true), ThemeToggleButton()],
+        actions: const [],
       ),
       body: requests.isEmpty
           ? _EmptyRequests(message: l10n.t('requests_screen_empty'))

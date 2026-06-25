@@ -1,11 +1,9 @@
-import 'dart:math' as math;
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 import '../core/context_extensions.dart';
 import '../models/pharmacy.dart';
-import 'section_card.dart';
 
 class PharmacyMapCard extends StatelessWidget {
   const PharmacyMapCard({super.key, required this.pharmacies});
@@ -14,117 +12,96 @@ class PharmacyMapCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
+    final appState = context.appState;
+    final userLoc = appState.userLocation;
     final theme = Theme.of(context);
-    return SectionCard(
-      icon: Icons.map_rounded,
-      title: l10n.t('map_title'),
-      subtitle: l10n.t('map_subtitle'),
-      child: Column(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: SizedBox(
-              height: 260,
-              child: CustomPaint(
-                painter: _CommunityMapPainter(
-                  pharmacies: pharmacies,
-                  theme: theme,
-                ),
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF0F172A), Color(0xFF1E3A8A)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+
+    final center = pharmacies.isEmpty
+        ? LatLng(userLoc.lat, userLoc.lng)
+        : LatLng(
+            pharmacies.map((p) => p.lat).reduce((a, b) => a + b) /
+                pharmacies.length,
+            pharmacies.map((p) => p.lng).reduce((a, b) => a + b) /
+                pharmacies.length,
+          );
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: SizedBox(
+        height: 320,
+        child: FlutterMap(
+          options: MapOptions(
+            initialCenter: center,
+            initialZoom: 13,
+          ),
+          children: [
+            TileLayer(
+              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+              userAgentPackageName: 'com.drugspot.app',
+            ),
+            MarkerLayer(
+              markers: [
+                Marker(
+                  point: LatLng(userLoc.lat, userLoc.lng),
+                  width: 36,
+                  height: 36,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                        ),
+                      ],
                     ),
+                    child: const Icon(Icons.person, color: Colors.white, size: 18),
                   ),
                 ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              l10n.t('map_legend'),
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: pharmacies
-                .map(
-                  (pharmacy) => Chip(
-                    avatar: CircleAvatar(backgroundColor: pharmacy.accent),
-                    label: Text(pharmacy.name),
+                ...pharmacies.map(
+                  (pharmacy) => Marker(
+                    point: LatLng(pharmacy.lat, pharmacy.lng),
+                    width: 44,
+                    height: 44,
+                    child: _PharmacyPin(pharmacy: pharmacy),
                   ),
-                )
-                .toList(),
-          ),
-        ],
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _CommunityMapPainter extends CustomPainter {
-  _CommunityMapPainter({required this.pharmacies, required this.theme});
+class _PharmacyPin extends StatelessWidget {
+  const _PharmacyPin({required this.pharmacy});
 
-  final List<Pharmacy> pharmacies;
-  final ThemeData theme;
+  final Pharmacy pharmacy;
 
   @override
-  void paint(Canvas canvas, Size size) {
-    final gridPaint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.08)
-      ..strokeWidth = 1;
-
-    for (var x = 0.0; x <= size.width; x += size.width / 6) {
-      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
-    }
-    for (var y = 0.0; y <= size.height; y += size.height / 6) {
-      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
-    }
-
-    if (pharmacies.isEmpty) return;
-
-    final minLat = pharmacies.map((p) => p.lat).reduce(math.min);
-    final maxLat = pharmacies.map((p) => p.lat).reduce(math.max);
-    final minLng = pharmacies.map((p) => p.lng).reduce(math.min);
-    final maxLng = pharmacies.map((p) => p.lng).reduce(math.max);
-
-    final dotPaint = Paint()..style = PaintingStyle.fill;
-
-    for (final pharmacy in pharmacies) {
-      final dx =
-          ((pharmacy.lng - minLng) / ((maxLng - minLng).abs() + 0.0001)) *
-          size.width;
-      final dy =
-          size.height -
-          ((pharmacy.lat - minLat) / ((maxLat - minLat).abs() + 0.0001)) *
-              size.height;
-      dotPaint.color = pharmacy.accent;
-      canvas.drawCircle(Offset(dx, dy), 12, dotPaint);
-
-      final textPainter = TextPainter(
-        text: TextSpan(
-          text: pharmacy.name.split(' ').first,
-          style: theme.textTheme.labelMedium?.copyWith(color: Colors.white),
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: pharmacy.name,
+      child: Container(
+        decoration: BoxDecoration(
+          color: pharmacy.accent,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2.5),
+          boxShadow: [
+            BoxShadow(
+              color: pharmacy.accent.withValues(alpha: 0.4),
+              blurRadius: 6,
+              spreadRadius: 1,
+            ),
+          ],
         ),
-        textDirection: ui.TextDirection.ltr,
-      )..layout(maxWidth: 120);
-
-      textPainter.paint(canvas, Offset(dx + 14, dy - 10));
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _CommunityMapPainter oldDelegate) {
-    return oldDelegate.pharmacies != pharmacies;
+        child: const Icon(Icons.local_pharmacy, color: Colors.white, size: 20),
+      ),
+    );
   }
 }

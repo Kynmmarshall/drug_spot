@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../core/context_extensions.dart';
 import '../models/geo_point.dart';
-import '../widgets/language_toggle.dart';
-import '../widgets/theme_toggle_button.dart';
+import '../models/user_type.dart';
+import '../services/api_service.dart';
+import 'patient_dashboard_screen.dart';
+import 'pharmacy_setup_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -22,7 +24,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
   bool _locating = false;
+  bool _submitting = false;
   GeoPoint? _detectedPoint;
+  UserType _selectedType = UserType.patient;
 
   @override
   void dispose() {
@@ -41,10 +45,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final padding = MediaQuery.of(context).viewInsets.bottom + 24;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.t('register_title')),
-        actions: const [LanguageToggle(dense: true), ThemeToggleButton()],
-      ),
+      appBar: AppBar(title: Text(l10n.t('register_title'))),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(24, 24, 24, padding),
@@ -58,6 +59,43 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
               ),
               const SizedBox(height: 24),
+
+              // User type selector
+              Text(
+                l10n.t('register_account_type'),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: SegmentedButton<UserType>(
+                  segments: UserType.values
+                      .map(
+                        (type) => ButtonSegment<UserType>(
+                          value: type,
+                          label: Text(l10n.userTypeLabel(type)),
+                          icon: Icon(type.icon, size: 18),
+                        ),
+                      )
+                      .toList(),
+                  selected: {_selectedType},
+                  showSelectedIcon: false,
+                  style: ButtonStyle(
+                    textStyle: WidgetStateProperty.all(
+                      const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    padding: WidgetStateProperty.all(
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    ),
+                  ),
+                  onSelectionChanged: (selection) =>
+                      setState(() => _selectedType = selection.first),
+                ),
+              ),
+              const SizedBox(height: 24),
+
               Form(
                 key: _formKey,
                 child: Column(
@@ -206,11 +244,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
-                  onPressed: _handleSubmit,
+                  onPressed: _submitting ? null : _handleSubmit,
                   style: FilledButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 18),
                   ),
-                  child: Text(l10n.t('register_button')),
+                  child: _submitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : Text(l10n.t('register_button')),
                 ),
               ),
             ],
@@ -230,13 +274,41 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     });
   }
 
-  void _handleSubmit() {
-    if (!(_formKey.currentState?.validate() ?? false)) {
-      return;
+  Future<void> _handleSubmit() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    setState(() => _submitting = true);
+
+    try {
+      final appState = context.appState;
+      await appState.register(
+        username: _usernameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _phoneController.text.trim(),
+        password: _passwordController.text,
+        userType: _selectedType,
+      );
+
+      if (!mounted) return;
+
+      final Widget destination;
+      if (appState.currentUserType == UserType.pharmacy) {
+        destination = const PharmacySetupScreen();
+      } else {
+        destination = const PatientDashboardScreen();
+      }
+
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => destination),
+        (_) => false,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.l10n.t('register_success'))));
-    Navigator.of(context).pop();
   }
 }
