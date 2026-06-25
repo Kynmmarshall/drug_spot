@@ -55,13 +55,21 @@ const countObserver = new IntersectionObserver((entries) => {
 document.querySelectorAll('[data-count]').forEach(el => countObserver.observe(el));
 
 // ── Build timestamp ──
-const buildDate = new Date();
-const formatted = buildDate.toLocaleDateString('en-GB', {
-  day: '2-digit', month: 'short', year: 'numeric'
-}) + ' · ' + buildDate.toLocaleTimeString('en-GB', {
-  hour: '2-digit', minute: '2-digit', hour12: false
-});
-document.getElementById('buildTimestamp').textContent = 'Build: ' + formatted;
+fetch('build-info.json?' + Date.now())
+  .then(r => r.json())
+  .then(info => {
+    const d = new Date(info.timestamp);
+    const formatted = d.toLocaleDateString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    }) + ' · ' + d.toLocaleTimeString('en-GB', {
+      hour: '2-digit', minute: '2-digit', hour12: false
+    });
+    const label = info.build ? `Build #${info.build}` : 'Build';
+    document.getElementById('buildTimestamp').textContent = `${label}: ${formatted}`;
+  })
+  .catch(() => {
+    document.getElementById('buildTimestamp').textContent = '';
+  });
 
 // ── Download button feedback ──
 const downloadBtn = document.getElementById('downloadBtn');
