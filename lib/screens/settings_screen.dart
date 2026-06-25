@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/context_extensions.dart';
 import '../models/app_language.dart';
 import '../screens/login_screen.dart';
+import 'notification_settings_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -61,6 +62,21 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
               onSelectionChanged: (s) => appState.setLanguage(s.first),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Notifications
+          GestureDetector(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const NotificationSettingsScreen()),
+            ),
+            child: _SettingsTile(
+              icon: Icons.notifications_rounded,
+              iconColor: const Color(0xFFF97316),
+              title: l10n.t('notif_title'),
+              subtitle: l10n.t('notif_subtitle_short'),
+              trailing: const Icon(Icons.chevron_right_rounded),
             ),
           ),
           const SizedBox(height: 32),

@@ -55,9 +55,12 @@ const countObserver = new IntersectionObserver((entries) => {
 document.querySelectorAll('[data-count]').forEach(el => countObserver.observe(el));
 
 // ── Build timestamp ──
-fetch('build-info.json?' + Date.now())
-  .then(r => r.json())
-  .then(info => {
+(async function loadBuildInfo() {
+  const el = document.getElementById('buildTimestamp');
+  try {
+    const r = await fetch('build-info.json?' + Date.now());
+    if (!r.ok) throw new Error(r.status);
+    const info = await r.json();
     const d = new Date(info.timestamp);
     const formatted = d.toLocaleDateString('en-GB', {
       day: '2-digit', month: 'short', year: 'numeric'
@@ -65,11 +68,14 @@ fetch('build-info.json?' + Date.now())
       hour: '2-digit', minute: '2-digit', hour12: false
     });
     const label = info.build ? `Build #${info.build}` : 'Build';
-    document.getElementById('buildTimestamp').textContent = `${label}: ${formatted}`;
-  })
-  .catch(() => {
-    document.getElementById('buildTimestamp').textContent = '';
-  });
+    el.textContent = `${label}: ${formatted}`;
+  } catch (_) {
+    const now = new Date();
+    el.textContent = 'Last updated: ' + now.toLocaleDateString('en-GB', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    });
+  }
+})();
 
 // ── Download button feedback ──
 const downloadBtn = document.getElementById('downloadBtn');

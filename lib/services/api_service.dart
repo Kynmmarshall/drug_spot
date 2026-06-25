@@ -358,6 +358,37 @@ class ApiService {
     return _parseJson(response);
   }
 
+  // ── Notifications ──
+
+  Future<void> registerDeviceToken(String token, String platform) async {
+    await _authPost(
+      Uri.parse('$baseUrl/api/notifications/device/register'),
+      body: jsonEncode({'token': token, 'platform': platform}),
+    );
+  }
+
+  Future<void> unregisterDeviceToken(String token) async {
+    await _authPost(
+      Uri.parse('$baseUrl/api/notifications/device/unregister'),
+      body: jsonEncode({'token': token}),
+    );
+  }
+
+  Future<Map<String, dynamic>> getNotificationPreferences() async {
+    final response =
+        await _authGet(Uri.parse('$baseUrl/api/notifications/preferences'));
+    return _parseJson(response);
+  }
+
+  Future<Map<String, dynamic>> updateNotificationPreferences(
+      Map<String, dynamic> data) async {
+    final response = await _authPut(
+      Uri.parse('$baseUrl/api/notifications/preferences'),
+      body: jsonEncode(data),
+    );
+    return _parseJson(response);
+  }
+
   String get wsBaseUrl {
     final uri = Uri.parse(baseUrl);
     final scheme = uri.scheme == 'https' ? 'wss' : 'ws';
