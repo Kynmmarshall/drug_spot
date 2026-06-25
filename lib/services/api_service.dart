@@ -326,4 +326,43 @@ class ApiService {
     );
     return _parseJson(response);
   }
+
+  // ── Conversations ──
+
+  Future<List<dynamic>> getConversations() async {
+    final response =
+        await _authGet(Uri.parse('$baseUrl/api/conversations/'));
+    return _parseJsonList(response);
+  }
+
+  Future<Map<String, dynamic>> startConversation(int userId) async {
+    final response = await _authPost(
+      Uri.parse('$baseUrl/api/conversations/start'),
+      body: jsonEncode({'user_id': userId}),
+    );
+    return _parseJson(response);
+  }
+
+  Future<List<dynamic>> getMessages(int conversationId) async {
+    final response = await _authGet(
+      Uri.parse('$baseUrl/api/conversations/$conversationId/messages'),
+    );
+    return _parseJsonList(response);
+  }
+
+  Future<Map<String, dynamic>> sendMessage(int conversationId, String text) async {
+    final response = await _authPost(
+      Uri.parse('$baseUrl/api/conversations/$conversationId/send'),
+      body: jsonEncode({'text': text}),
+    );
+    return _parseJson(response);
+  }
+
+  String get wsBaseUrl {
+    final uri = Uri.parse(baseUrl);
+    final scheme = uri.scheme == 'https' ? 'wss' : 'ws';
+    return '$scheme://${uri.host}:${uri.port}';
+  }
+
+  String? get accessToken => _accessToken;
 }

@@ -8,6 +8,7 @@ import '../widgets/medicine_form_sheet.dart';
 import '../widgets/medicine_tile.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/section_card.dart';
+import 'chat_list_screen.dart';
 import 'community_map_screen.dart';
 import 'medicine_detail_screen.dart';
 import 'profile_screen.dart';
@@ -70,6 +71,13 @@ class PharmacyDashboardScreen extends StatelessWidget {
             tooltip: l10n.t('my_medicines_title'),
             icon: const Icon(Icons.inventory_2_rounded),
             onPressed: () => _openMyMedicinesScreen(context),
+          ),
+          IconButton(
+            tooltip: l10n.t('chat_title'),
+            icon: const Icon(Icons.chat_rounded),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ChatListScreen()),
+            ),
           ),
           IconButton(
             tooltip: l10n.t('settings_title'),

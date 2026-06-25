@@ -133,6 +133,11 @@ class Localizer {
       'profile_pharmacy_hint': 'These details appear on the community map and medicine listings.',
       'profile_pharmacy_phone': 'Pharmacy phone',
       'profile_update_location': 'Update location',
+      'chat_title': 'Messages',
+      'chat_empty': 'No conversations yet.',
+      'chat_hint': 'Type a message...',
+      'chat_start_hint': 'Say hello to start the conversation.',
+      'chat_message_pharmacy': 'Message pharmacy',
     },
     AppLanguage.fr: {
       'login_title': 'Trouvez une pharmacie fiable près de vous',
@@ -261,6 +266,11 @@ class Localizer {
       'profile_pharmacy_hint': 'Ces informations apparaissent sur la carte et les fiches médicaments.',
       'profile_pharmacy_phone': 'Téléphone pharmacie',
       'profile_update_location': 'Mettre à jour la position',
+      'chat_title': 'Messages',
+      'chat_empty': 'Aucune conversation.',
+      'chat_hint': 'Écrivez un message...',
+      'chat_start_hint': 'Dites bonjour pour commencer.',
+      'chat_message_pharmacy': 'Contacter la pharmacie',
     },
   };
 

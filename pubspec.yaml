@@ -19,6 +19,8 @@ dependencies:
   geolocator: ^13.0.2
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
+  web_socket_channel: ^3.0.1
+  image_picker: ^1.1.2
 
 dev_dependencies:
   flutter_test:

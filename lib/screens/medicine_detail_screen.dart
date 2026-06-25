@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../core/context_extensions.dart';
 import '../models/medicine.dart';
 import '../models/pharmacy.dart';
+import '../services/api_service.dart';
 import '../widgets/section_card.dart';
+import 'chat_screen.dart';
 
 class MedicineDetailScreen extends StatelessWidget {
   const MedicineDetailScreen({
@@ -14,6 +16,30 @@ class MedicineDetailScreen extends StatelessWidget {
 
   final Medicine medicine;
   final Pharmacy pharmacy;
+
+  Future<void> _openChat(BuildContext context, int pharmacyUserId) async {
+    try {
+      final data = await context.appState.api.startConversation(pharmacyUserId);
+      if (!context.mounted) return;
+      final names = (data['participant_names'] as List).cast<String>();
+      final myId = context.appState.api.userId ?? 0;
+      final myIdx = (data['participant_ids'] as List).indexOf(myId);
+      final otherName = names[myIdx == 0 ? 1 : 0];
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            conversationId: data['id'] as int,
+            otherName: otherName,
+          ),
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +70,17 @@ class MedicineDetailScreen extends StatelessWidget {
                   label:
                       '${l10n.t('medicine_details_contact')}: ${pharmacy.phone}',
                 ),
+                if (pharmacy.userId != null) ...[
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openChat(context, pharmacy.userId!),
+                      icon: const Icon(Icons.chat_rounded),
+                      label: Text(l10n.t('chat_message_pharmacy')),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

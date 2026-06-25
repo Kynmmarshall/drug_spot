@@ -8,6 +8,7 @@ import '../widgets/dashboard_action_bar.dart';
 import '../widgets/medicine_tile.dart';
 import '../widgets/profile_avatar.dart';
 import '../widgets/section_card.dart';
+import 'chat_list_screen.dart';
 import 'community_map_screen.dart';
 import 'medicine_detail_screen.dart';
 import 'profile_screen.dart';
@@ -129,6 +130,13 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             tooltip: l10n.t('map_cta'),
             icon: const Icon(Icons.public_rounded),
             onPressed: _openCommunityMap,
+          ),
+          IconButton(
+            tooltip: l10n.t('chat_title'),
+            icon: const Icon(Icons.chat_rounded),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ChatListScreen()),
+            ),
           ),
           IconButton(
             tooltip: l10n.t('settings_title'),
