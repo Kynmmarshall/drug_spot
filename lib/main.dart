@@ -86,9 +86,7 @@ class _DrugSpotAppState extends State<DrugSpotApp> {
 
   Widget _buildHome() {
     if (!_state.initialized) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_state.isLoggedIn) {
