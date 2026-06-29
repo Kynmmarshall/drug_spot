@@ -26,14 +26,17 @@ class _ChatScreenState extends State<ChatScreen> {
   final _scrollController = ScrollController();
   List<ChatMessage> _messages = [];
   bool _loading = true;
+  bool _started = false;
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
     _loadHistory();
-    _connectWebSocket();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _connectWebSocket());
   }
 
   Future<void> _loadHistory() async {
@@ -43,7 +46,8 @@ class _ChatScreenState extends State<ChatScreen> {
       if (!mounted) return;
       setState(() {
         _messages = data
-            .map((j) => ChatMessage.fromJson(j as Map<String, dynamic>))
+            .whereType<Map<String, dynamic>>()
+            .map(ChatMessage.fromJson)
             .toList();
         _loading = false;
       });
@@ -56,33 +60,37 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _connectWebSocket() {
     final api = context.appState.api;
+    final token = api.accessToken;
+    if (token == null || token.isEmpty) return;
+
     final wsUrl =
-        '${api.wsBaseUrl}/ws/chat/${widget.conversationId}/?token=${api.accessToken}';
+        '${api.wsBaseUrl}/ws/chat/${widget.conversationId}/?token=$token';
 
     try {
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       _subscription = _channel!.stream.listen(
         (data) {
-          final json = jsonDecode(data as String) as Map<String, dynamic>;
-          final message = ChatMessage(
-            id: json['id'] as int,
-            conversationId: widget.conversationId,
-            sender: json['sender'] as int,
-            senderUsername: json['sender_username'] as String,
-            text: json['text'] as String,
-            isRead: false,
-            createdAt: json['created_at'] as String,
-          );
+          ChatMessage message;
+          try {
+            final decoded = jsonDecode(data as String);
+            if (decoded is! Map<String, dynamic>) return;
+            message = ChatMessage.fromJson({
+              ...decoded,
+              'conversation': decoded['conversation'] ?? widget.conversationId,
+            });
+          } catch (_) {
+            return;
+          }
 
           if (!mounted) return;
-          final isDuplicate = _messages.any((m) => m.id == message.id);
-          if (!isDuplicate) {
-            setState(() => _messages.add(message));
-            _scrollToBottom();
-          }
+          _addMessage(message);
         },
-        onError: (_) {},
-        onDone: () {},
+        onError: (_) {
+          _channel = null;
+        },
+        onDone: () {
+          _channel = null;
+        },
       );
     } catch (_) {}
   }
@@ -103,22 +111,29 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     _controller.clear();
+    await _sendMessageOverHttp(text);
+  }
 
-    if (_channel != null) {
-      _channel!.sink.add(jsonEncode({'text': text}));
-    } else {
-      try {
-        final json =
-            await context.appState.api.sendMessage(widget.conversationId, text);
-        if (!mounted) return;
-        setState(() => _messages.add(ChatMessage.fromJson(json)));
-        _scrollToBottom();
-      } catch (e) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.toString())),
-        );
-      }
+  void _addMessage(ChatMessage message) {
+    final isDuplicate =
+        message.id != 0 && _messages.any((m) => m.id == message.id);
+    if (isDuplicate) return;
+
+    setState(() => _messages.add(message));
+    _scrollToBottom();
+  }
+
+  Future<void> _sendMessageOverHttp(String text) async {
+    try {
+      final json =
+          await context.appState.api.sendMessage(widget.conversationId, text);
+      if (!mounted) return;
+      _addMessage(ChatMessage.fromJson(json));
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
     }
   }
 

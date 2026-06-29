@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -17,6 +18,7 @@ class ApiService {
   static const String _defaultBaseUrl = 'https://drug-spot.duckdns.org';
   static const String _accessKey = 'access_token';
   static const String _refreshKey = 'refresh_token';
+  static const Duration _requestTimeout = Duration(seconds: 20);
 
   final String baseUrl;
   final http.Client _client;
@@ -75,10 +77,24 @@ class ApiService {
   // ── HTTP helpers ──
 
   Map<String, dynamic> _parseJson(http.Response response) {
-    final body = jsonDecode(response.body);
-    if (response.statusCode >= 200 && response.statusCode < 300) {
-      return body as Map<String, dynamic>;
+    final Object? body;
+    try {
+      body = response.body.isEmpty ? null : jsonDecode(response.body);
+    } on FormatException {
+      throw ApiException(
+        'Server returned an invalid response',
+        response.statusCode,
+      );
     }
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      if (body is Map<String, dynamic>) return body;
+      throw ApiException(
+        'Server returned an invalid response',
+        response.statusCode,
+      );
+    }
+
     String message;
     if (body is Map) {
       message = (body['error'] ??
@@ -94,47 +110,72 @@ class ApiService {
 
   List<dynamic> _parseJsonList(http.Response response) {
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      return jsonDecode(response.body) as List<dynamic>;
+      try {
+        final body = response.body.isEmpty ? null : jsonDecode(response.body);
+        if (body is List) return body;
+      } on FormatException {
+        throw ApiException(
+          'Server returned an invalid response',
+          response.statusCode,
+        );
+      }
+      throw ApiException(
+        'Server returned an invalid response',
+        response.statusCode,
+      );
     }
-    final body = jsonDecode(response.body);
+    final Object? body;
+    try {
+      body = response.body.isEmpty ? null : jsonDecode(response.body);
+    } on FormatException {
+      throw ApiException('Request failed', response.statusCode);
+    }
     final message = body is Map
         ? (body['error'] ?? body['detail'] ?? 'Request failed').toString()
         : 'Request failed';
     throw ApiException(message, response.statusCode);
   }
 
+  Future<http.Response> _send(Future<http.Response> request) async {
+    try {
+      return await request.timeout(_requestTimeout);
+    } on TimeoutException {
+      throw ApiException('Connection timed out. Please try again.', 0);
+    } on http.ClientException catch (e) {
+      throw ApiException(e.message, 0);
+    } on Exception {
+      throw ApiException('Network request failed. Please try again.', 0);
+    }
+  }
+
   Future<http.Response> _authGet(Uri uri) async {
-    var response = await _client.get(uri, headers: _headers);
+    var response = await _send(_client.get(uri, headers: _headers));
     if (response.statusCode == 401 && await _tryRefresh()) {
-      response = await _client.get(uri, headers: _headers);
+      response = await _send(_client.get(uri, headers: _headers));
     }
     return response;
   }
 
   Future<http.Response> _authPost(Uri uri, {Object? body}) async {
-    var response =
-        await _client.post(uri, headers: _headers, body: body);
+    var response = await _send(_client.post(uri, headers: _headers, body: body));
     if (response.statusCode == 401 && await _tryRefresh()) {
-      response =
-          await _client.post(uri, headers: _headers, body: body);
+      response = await _send(_client.post(uri, headers: _headers, body: body));
     }
     return response;
   }
 
   Future<http.Response> _authPut(Uri uri, {Object? body}) async {
-    var response =
-        await _client.put(uri, headers: _headers, body: body);
+    var response = await _send(_client.put(uri, headers: _headers, body: body));
     if (response.statusCode == 401 && await _tryRefresh()) {
-      response =
-          await _client.put(uri, headers: _headers, body: body);
+      response = await _send(_client.put(uri, headers: _headers, body: body));
     }
     return response;
   }
 
   Future<http.Response> _authDelete(Uri uri) async {
-    var response = await _client.delete(uri, headers: _headers);
+    var response = await _send(_client.delete(uri, headers: _headers));
     if (response.statusCode == 401 && await _tryRefresh()) {
-      response = await _client.delete(uri, headers: _headers);
+      response = await _send(_client.delete(uri, headers: _headers));
     }
     return response;
   }
@@ -142,10 +183,12 @@ class ApiService {
   Future<bool> _tryRefresh() async {
     if (_refreshToken == null) return false;
     try {
-      final response = await _client.post(
-        Uri.parse('$baseUrl/api/refresh'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'refresh': _refreshToken}),
+      final response = await _send(
+        _client.post(
+          Uri.parse('$baseUrl/api/refresh'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'refresh': _refreshToken}),
+        ),
       );
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -169,16 +212,18 @@ class ApiService {
     required String password,
     required String userType,
   }) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/api/register'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'username': username,
-        'email': email,
-        'phone': phone,
-        'password': password,
-        'user_type': userType,
-      }),
+    final response = await _send(
+      _client.post(
+        Uri.parse('$baseUrl/api/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'username': username,
+          'email': email,
+          'phone': phone,
+          'password': password,
+          'user_type': userType,
+        }),
+      ),
     );
     final data = _parseJson(response);
     await _saveTokens(data['access'] as String, data['refresh'] as String);
@@ -186,10 +231,12 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> login(String username, String password) async {
-    final response = await _client.post(
-      Uri.parse('$baseUrl/api/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'username': username, 'password': password}),
+    final response = await _send(
+      _client.post(
+        Uri.parse('$baseUrl/api/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'username': username, 'password': password}),
+      ),
     );
     final data = _parseJson(response);
     await _saveTokens(data['access'] as String, data['refresh'] as String);
@@ -257,7 +304,10 @@ class ApiService {
     return _parseJson(response);
   }
 
-  Future<Map<String, dynamic>> updatePharmacy(int id, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> updatePharmacy(
+    int id,
+    Map<String, dynamic> data,
+  ) async {
     final response = await _authPut(
       Uri.parse('$baseUrl/api/pharmacies/$id'),
       body: jsonEncode(data),
@@ -350,7 +400,10 @@ class ApiService {
     return _parseJsonList(response);
   }
 
-  Future<Map<String, dynamic>> sendMessage(int conversationId, String text) async {
+  Future<Map<String, dynamic>> sendMessage(
+    int conversationId,
+    String text,
+  ) async {
     final response = await _authPost(
       Uri.parse('$baseUrl/api/conversations/$conversationId/send'),
       body: jsonEncode({'text': text}),
@@ -392,7 +445,8 @@ class ApiService {
   String get wsBaseUrl {
     final uri = Uri.parse(baseUrl);
     final scheme = uri.scheme == 'https' ? 'wss' : 'ws';
-    return '$scheme://${uri.host}:${uri.port}';
+    final port = uri.hasPort ? ':${uri.port}' : '';
+    return '$scheme://${uri.host}$port';
   }
 
   String? get accessToken => _accessToken;

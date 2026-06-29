@@ -9,14 +9,16 @@ class Conversation {
   });
 
   factory Conversation.fromJson(Map<String, dynamic> json) {
-    final lastMsg = json['last_message'] as Map<String, dynamic>?;
+    final lastMsg = json['last_message'];
     return Conversation(
-      id: json['id'] as int,
-      participantIds: (json['participant_ids'] as List).cast<int>(),
-      participantNames: (json['participant_names'] as List).cast<String>(),
-      lastMessage: lastMsg != null ? LastMessage.fromJson(lastMsg) : null,
-      unreadCount: json['unread_count'] as int? ?? 0,
-      updatedAt: json['updated_at'] as String,
+      id: _readInt(json['id']),
+      participantIds: _readIntList(json['participant_ids']),
+      participantNames: _readStringList(json['participant_names']),
+      lastMessage: lastMsg is Map<String, dynamic>
+          ? LastMessage.fromJson(lastMsg)
+          : null,
+      unreadCount: _readInt(json['unread_count']),
+      updatedAt: json['updated_at']?.toString() ?? '',
     );
   }
 
@@ -34,16 +36,44 @@ class Conversation {
     }
     return participantNames[idx == 0 ? 1 : 0];
   }
+
+  static int _readInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    if (value is Map) return _readInt(value['id']);
+    return 0;
+  }
+
+  static List<int> _readIntList(Object? value) {
+    if (value is! List) return const [];
+    return value.map(_readInt).where((id) => id != 0).toList();
+  }
+
+  static List<String> _readStringList(Object? value) {
+    if (value is! List) return const [];
+    return value.map((item) {
+      if (item is Map) {
+        return (item['username'] ?? item['name'] ?? item['id'] ?? 'Unknown')
+            .toString();
+      }
+      return item.toString();
+    }).toList();
+  }
 }
 
 class LastMessage {
-  const LastMessage({required this.text, required this.sender, required this.createdAt});
+  const LastMessage({
+    required this.text,
+    required this.sender,
+    required this.createdAt,
+  });
 
   factory LastMessage.fromJson(Map<String, dynamic> json) {
     return LastMessage(
-      text: json['text'] as String,
-      sender: json['sender'] as String,
-      createdAt: json['created_at'] as String,
+      text: json['text']?.toString() ?? '',
+      sender: json['sender']?.toString() ?? '',
+      createdAt: json['created_at']?.toString() ?? '',
     );
   }
 

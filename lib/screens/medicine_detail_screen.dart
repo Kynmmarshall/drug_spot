@@ -7,7 +7,7 @@ import '../services/api_service.dart';
 import '../widgets/section_card.dart';
 import 'chat_screen.dart';
 
-class MedicineDetailScreen extends StatelessWidget {
+class MedicineDetailScreen extends StatefulWidget {
   const MedicineDetailScreen({
     super.key,
     required this.medicine,
@@ -17,66 +17,110 @@ class MedicineDetailScreen extends StatelessWidget {
   final Medicine medicine;
   final Pharmacy pharmacy;
 
-  Future<void> _openChat(BuildContext context, int pharmacyUserId) async {
+  @override
+  State<MedicineDetailScreen> createState() => _MedicineDetailScreenState();
+}
+
+class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
+  bool _openingChat = false;
+
+  Future<void> _openChat(int pharmacyUserId) async {
+    if (_openingChat) return;
+    setState(() => _openingChat = true);
+
     try {
       final data = await context.appState.api.startConversation(pharmacyUserId);
-      if (!context.mounted) return;
-      final names = (data['participant_names'] as List).cast<String>();
+      if (!mounted) return;
+      final names =
+          (data['participant_names'] as List? ?? []).map((v) => '$v').toList();
+      final ids = (data['participant_ids'] as List? ?? [])
+          .map((v) => int.tryParse('$v'))
+          .whereType<int>()
+          .toList();
       final myId = context.appState.api.userId ?? 0;
-      final myIdx = (data['participant_ids'] as List).indexOf(myId);
-      final otherName = names[myIdx == 0 ? 1 : 0];
+      final myIdx = ids.indexOf(myId);
+      final otherIdx = myIdx == 0 ? 1 : 0;
+      final otherName = names.length > otherIdx
+          ? names[otherIdx]
+          : context.l10n.t('chat_title');
+      final conversationId = int.tryParse('${data['id']}');
+      if (conversationId == null) {
+        throw ApiException('Could not open chat. Please try again.', 0);
+      }
+
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => ChatScreen(
-            conversationId: data['id'] as int,
+            conversationId: conversationId,
             otherName: otherName,
           ),
         ),
       );
     } on ApiException catch (e) {
-      if (!context.mounted) return;
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.message)),
       );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _openingChat = false);
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final accent = pharmacy.accent;
+    final accent = widget.pharmacy.accent;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.t('medicine_details_title'))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
         children: [
-          _HeroCard(medicine: medicine, pharmacy: pharmacy, accent: accent),
+          _HeroCard(
+            medicine: widget.medicine,
+            pharmacy: widget.pharmacy,
+            accent: accent,
+          ),
           const SizedBox(height: 24),
           SectionCard(
             icon: Icons.local_pharmacy,
             title: l10n.t('medicine_details_pharmacy'),
-            subtitle: pharmacy.name,
+            subtitle: widget.pharmacy.name,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _InfoRow(
                   icon: Icons.location_on_outlined,
-                  label: pharmacy.address,
+                  label: widget.pharmacy.address,
                 ),
                 const SizedBox(height: 12),
                 _InfoRow(
                   icon: Icons.phone_outlined,
-                  label:
-                      '${l10n.t('medicine_details_contact')}: ${pharmacy.phone}',
+                  label: '${l10n.t('medicine_details_contact')}: '
+                      '${widget.pharmacy.phone}',
                 ),
-                if (pharmacy.userId != null) ...[
+                if (widget.pharmacy.userId != null) ...[
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
-                      onPressed: () => _openChat(context, pharmacy.userId!),
-                      icon: const Icon(Icons.chat_rounded),
+                      onPressed: _openingChat
+                          ? null
+                          : () => _openChat(widget.pharmacy.userId!),
+                      icon: _openingChat
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.chat_rounded),
                       label: Text(l10n.t('chat_message_pharmacy')),
                     ),
                   ),
