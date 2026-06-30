@@ -10,14 +10,15 @@ class ChatMessage {
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    final sender = json['sender'];
     return ChatMessage(
-      id: json['id'] as int,
-      conversationId: json['conversation'] as int? ?? 0,
-      sender: json['sender'] as int,
-      senderUsername: json['sender_username'] as String? ?? '',
-      text: json['text'] as String,
-      isRead: json['is_read'] as bool? ?? false,
-      createdAt: json['created_at'] as String,
+      id: _readInt(json['id']),
+      conversationId: _readInt(json['conversation']),
+      sender: _readInt(sender),
+      senderUsername: _readSenderUsername(json),
+      text: json['text']?.toString() ?? '',
+      isRead: json['is_read'] == true,
+      createdAt: json['created_at']?.toString() ?? '',
     );
   }
 
@@ -28,4 +29,24 @@ class ChatMessage {
   final String text;
   final bool isRead;
   final String createdAt;
+
+  static int _readInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    if (value is Map) return _readInt(value['id']);
+    return 0;
+  }
+
+  static String _readSenderUsername(Map<String, dynamic> json) {
+    final direct = json['sender_username'];
+    if (direct != null) return direct.toString();
+
+    final sender = json['sender'];
+    if (sender is Map) {
+      return (sender['username'] ?? sender['name'] ?? '').toString();
+    }
+
+    return '';
+  }
 }

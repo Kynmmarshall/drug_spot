@@ -5,7 +5,6 @@ import '../models/user_type.dart';
 import '../services/api_service.dart';
 import 'patient_dashboard_screen.dart';
 import 'pharmacy_dashboard_screen.dart';
-import 'pharmacy_setup_screen.dart';
 import 'registration_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -172,9 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       final Widget destination;
-      if (appState.currentUserType == UserType.pharmacy && !appState.hasPharmacy) {
-        destination = const PharmacySetupScreen();
-      } else if (appState.currentUserType == UserType.pharmacy) {
+      if (appState.currentUserType == UserType.pharmacy) {
         destination = const PharmacyDashboardScreen();
       } else {
         destination = const PatientDashboardScreen();

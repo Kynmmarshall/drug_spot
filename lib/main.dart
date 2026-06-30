@@ -1,3 +1,5 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
@@ -7,10 +9,17 @@ import 'models/user_type.dart';
 import 'screens/login_screen.dart';
 import 'screens/patient_dashboard_screen.dart';
 import 'screens/pharmacy_dashboard_screen.dart';
-import 'screens/pharmacy_setup_screen.dart';
+import 'services/push_notification_service.dart';
 
-void main() {
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+}
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   runApp(const DrugSpotApp());
 }
 
@@ -23,15 +32,26 @@ class DrugSpotApp extends StatefulWidget {
 
 class _DrugSpotAppState extends State<DrugSpotApp> {
   final AppState _state = AppState();
+  PushNotificationService? _pushService;
 
   @override
   void initState() {
     super.initState();
+    _state.addListener(_onStateChanged);
     _state.init();
+  }
+
+  void _onStateChanged() {
+    if (_state.isLoggedIn && _pushService == null) {
+      _pushService = PushNotificationService(_state.api);
+      _pushService!.init();
+    }
   }
 
   @override
   void dispose() {
+    _state.removeListener(_onStateChanged);
+    _pushService?.dispose();
     _state.dispose();
     super.dispose();
   }
@@ -71,9 +91,6 @@ class _DrugSpotAppState extends State<DrugSpotApp> {
     }
 
     if (_state.isLoggedIn) {
-      if (_state.currentUserType == UserType.pharmacy && !_state.hasPharmacy) {
-        return const PharmacySetupScreen();
-      }
       return _state.currentUserType == UserType.pharmacy
           ? const PharmacyDashboardScreen()
           : const PatientDashboardScreen();

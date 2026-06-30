@@ -14,10 +14,13 @@ class ChatListScreen extends StatefulWidget {
 class _ChatListScreenState extends State<ChatListScreen> {
   List<Conversation> _conversations = [];
   bool _loading = true;
+  bool _loaded = false;
 
   @override
-  void initState() {
-    super.initState();
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_loaded) return;
+    _loaded = true;
     _load();
   }
 
@@ -28,7 +31,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
       if (!mounted) return;
       setState(() {
         _conversations = data
-            .map((j) => Conversation.fromJson(j as Map<String, dynamic>))
+            .whereType<Map<String, dynamic>>()
+            .map(Conversation.fromJson)
             .toList();
         _loading = false;
       });
