@@ -29,6 +29,7 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _started = false;
   WebSocketChannel? _channel;
   StreamSubscription? _subscription;
+  Timer? _pollTimer;
 
   @override
   void didChangeDependencies() {
@@ -46,7 +47,7 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  Future<void> _loadHistory() async {
+  Future<void> _loadHistory({bool showErrors = true}) async {
     try {
       debugPrint(
         '[ChatScreen] Loading history for conversationId=${widget.conversationId}',
@@ -69,9 +70,11 @@ class _ChatScreenState extends State<ChatScreen> {
       debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
       setState(() => _loading = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(e.toString())));
+      if (showErrors) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
     }
   }
 
@@ -84,12 +87,16 @@ class _ChatScreenState extends State<ChatScreen> {
       return;
     }
 
-    final wsUrl =
-        '${api.wsBaseUrl}/ws/chat/${widget.conversationId}/?token=$token';
+    final wsUrl = Uri.parse(api.wsBaseUrl)
+        .replace(
+          path: '/ws/chat/${widget.conversationId}/',
+          queryParameters: {'token': token},
+        )
+        .toString();
 
     try {
       debugPrint(
-        '[ChatScreen] Connecting websocket for conversationId=${widget.conversationId}',
+        '[ChatScreen] Connecting websocket url=$wsUrl',
       );
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       _subscription = _channel!.stream.listen(
@@ -114,16 +121,27 @@ class _ChatScreenState extends State<ChatScreen> {
         onError: (error) {
           debugPrint('[ChatScreen] Websocket error: $error');
           _channel = null;
+          _startHistoryPolling();
         },
         onDone: () {
           debugPrint('[ChatScreen] Websocket closed');
           _channel = null;
+          _startHistoryPolling();
         },
       );
     } catch (e, stackTrace) {
       debugPrint('[ChatScreen] Failed to connect websocket: $e');
       debugPrintStack(stackTrace: stackTrace);
     }
+  }
+
+  void _startHistoryPolling() {
+    if (_pollTimer != null) return;
+    debugPrint('[ChatScreen] Falling back to HTTP message polling');
+    _pollTimer = Timer.periodic(
+      const Duration(seconds: 5),
+      (_) => _loadHistory(showErrors: false),
+    );
   }
 
   void _scrollToBottom() {
@@ -178,6 +196,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   void dispose() {
+    _pollTimer?.cancel();
     _subscription?.cancel();
     _channel?.sink.close();
     _controller.dispose();

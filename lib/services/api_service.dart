@@ -445,8 +445,9 @@ class ApiService {
   String get wsBaseUrl {
     final uri = Uri.parse(baseUrl);
     final scheme = uri.scheme == 'https' ? 'wss' : 'ws';
-    final port = uri.hasPort ? ':${uri.port}' : '';
-    return '$scheme://${uri.host}$port';
+    return uri
+        .replace(scheme: scheme, path: '', query: '', fragment: '')
+        .toString();
   }
 
   String? get accessToken => _accessToken;
