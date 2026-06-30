@@ -24,8 +24,8 @@ class ApiService {
   String? _refreshToken;
 
   ApiService({String? baseUrl, http.Client? client})
-      : baseUrl = baseUrl ?? _defaultBaseUrl,
-        _client = client ?? http.Client();
+    : baseUrl = baseUrl ?? _defaultBaseUrl,
+      _client = client ?? http.Client();
 
   bool get hasToken => _accessToken != null;
 
@@ -44,9 +44,9 @@ class ApiService {
   }
 
   Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
-      };
+    'Content-Type': 'application/json',
+    if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
+  };
 
   // ── Token persistence ──
 
@@ -81,11 +81,12 @@ class ApiService {
     }
     String message;
     if (body is Map) {
-      message = (body['error'] ??
-              body['detail'] ??
-              body.values.first?.toString() ??
-              'Request failed')
-          .toString();
+      message =
+          (body['error'] ??
+                  body['detail'] ??
+                  body.values.first?.toString() ??
+                  'Request failed')
+              .toString();
     } else {
       message = 'Request failed';
     }
@@ -112,21 +113,17 @@ class ApiService {
   }
 
   Future<http.Response> _authPost(Uri uri, {Object? body}) async {
-    var response =
-        await _client.post(uri, headers: _headers, body: body);
+    var response = await _client.post(uri, headers: _headers, body: body);
     if (response.statusCode == 401 && await _tryRefresh()) {
-      response =
-          await _client.post(uri, headers: _headers, body: body);
+      response = await _client.post(uri, headers: _headers, body: body);
     }
     return response;
   }
 
   Future<http.Response> _authPut(Uri uri, {Object? body}) async {
-    var response =
-        await _client.put(uri, headers: _headers, body: body);
+    var response = await _client.put(uri, headers: _headers, body: body);
     if (response.statusCode == 401 && await _tryRefresh()) {
-      response =
-          await _client.put(uri, headers: _headers, body: body);
+      response = await _client.put(uri, headers: _headers, body: body);
     }
     return response;
   }
@@ -208,6 +205,30 @@ class ApiService {
     await clearToken();
   }
 
+  // ── Email Verification ──
+
+  /// Sends (or resends) a 6-digit OTP to the authenticated user's email.
+  /// Returns the masked email address (e.g. "j***@example.com").
+  Future<String> sendVerificationEmail() async {
+    final response = await _authPost(
+      Uri.parse('$baseUrl/api/send-verification'),
+    );
+    final data = _parseJson(response);
+    return data['email'] as String;
+  }
+
+  /// Submits the OTP entered by the user.
+  /// Returns the updated user map on success.
+  /// Throws [ApiException] on wrong/expired OTP.
+  Future<Map<String, dynamic>> verifyEmail(String otp) async {
+    final response = await _authPost(
+      Uri.parse('$baseUrl/api/verify-email'),
+      body: jsonEncode({'otp': otp}),
+    );
+    final data = _parseJson(response);
+    return data['user'] as Map<String, dynamic>;
+  }
+
   // ── Profile ──
 
   Future<Map<String, dynamic>> getProfile() async {
@@ -257,7 +278,10 @@ class ApiService {
     return _parseJson(response);
   }
 
-  Future<Map<String, dynamic>> updatePharmacy(int id, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> updatePharmacy(
+    int id,
+    Map<String, dynamic> data,
+  ) async {
     final response = await _authPut(
       Uri.parse('$baseUrl/api/pharmacies/$id'),
       body: jsonEncode(data),
@@ -273,8 +297,9 @@ class ApiService {
   }
 
   Future<List<dynamic>> getMedicinesByPharmacy(int pharmacyId) async {
-    final response =
-        await _authGet(Uri.parse('$baseUrl/api/medicines/pharmacy/$pharmacyId'));
+    final response = await _authGet(
+      Uri.parse('$baseUrl/api/medicines/pharmacy/$pharmacyId'),
+    );
     return _parseJsonList(response);
   }
 
@@ -302,8 +327,9 @@ class ApiService {
   // ── Medicine Requests ──
 
   Future<List<dynamic>> getMedicineRequests() async {
-    final response =
-        await _authGet(Uri.parse('$baseUrl/api/medicine_requests/'));
+    final response = await _authGet(
+      Uri.parse('$baseUrl/api/medicine_requests/'),
+    );
     return _parseJsonList(response);
   }
 
@@ -330,8 +356,7 @@ class ApiService {
   // ── Conversations ──
 
   Future<List<dynamic>> getConversations() async {
-    final response =
-        await _authGet(Uri.parse('$baseUrl/api/conversations/'));
+    final response = await _authGet(Uri.parse('$baseUrl/api/conversations/'));
     return _parseJsonList(response);
   }
 
@@ -350,7 +375,10 @@ class ApiService {
     return _parseJsonList(response);
   }
 
-  Future<Map<String, dynamic>> sendMessage(int conversationId, String text) async {
+  Future<Map<String, dynamic>> sendMessage(
+    int conversationId,
+    String text,
+  ) async {
     final response = await _authPost(
       Uri.parse('$baseUrl/api/conversations/$conversationId/send'),
       body: jsonEncode({'text': text}),
@@ -375,13 +403,15 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getNotificationPreferences() async {
-    final response =
-        await _authGet(Uri.parse('$baseUrl/api/notifications/preferences'));
+    final response = await _authGet(
+      Uri.parse('$baseUrl/api/notifications/preferences'),
+    );
     return _parseJson(response);
   }
 
   Future<Map<String, dynamic>> updateNotificationPreferences(
-      Map<String, dynamic> data) async {
+    Map<String, dynamic> data,
+  ) async {
     final response = await _authPut(
       Uri.parse('$baseUrl/api/notifications/preferences'),
       body: jsonEncode(data),
