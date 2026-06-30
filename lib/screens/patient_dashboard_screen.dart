@@ -43,6 +43,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
   }
 
   void _openProfile() {
+    debugPrint('[PatientDashboard] Opening patient profile screen');
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => const ProfileScreen(userType: UserType.patient),

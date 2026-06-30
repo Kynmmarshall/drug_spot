@@ -35,14 +35,26 @@ class _ChatScreenState extends State<ChatScreen> {
     super.didChangeDependencies();
     if (_started) return;
     _started = true;
+    debugPrint(
+      '[ChatScreen] Starting conversationId=${widget.conversationId} '
+      'otherName=${widget.otherName}',
+    );
     _loadHistory();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _connectWebSocket());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _connectWebSocket();
+    });
   }
 
   Future<void> _loadHistory() async {
     try {
-      final data =
-          await context.appState.api.getMessages(widget.conversationId);
+      debugPrint(
+        '[ChatScreen] Loading history for conversationId=${widget.conversationId}',
+      );
+      final data = await context.appState.api.getMessages(
+        widget.conversationId,
+      );
+      debugPrint('[ChatScreen] Loaded ${data.length} historical messages');
       if (!mounted) return;
       setState(() {
         _messages = data
@@ -52,21 +64,33 @@ class _ChatScreenState extends State<ChatScreen> {
         _loading = false;
       });
       _scrollToBottom();
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[ChatScreen] Failed to load history: $e');
+      debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
       setState(() => _loading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
   void _connectWebSocket() {
+    if (!mounted) return;
     final api = context.appState.api;
     final token = api.accessToken;
-    if (token == null || token.isEmpty) return;
+    if (token == null || token.isEmpty) {
+      debugPrint('[ChatScreen] Skipping websocket: missing access token');
+      return;
+    }
 
     final wsUrl =
         '${api.wsBaseUrl}/ws/chat/${widget.conversationId}/?token=$token';
 
     try {
+      debugPrint(
+        '[ChatScreen] Connecting websocket for conversationId=${widget.conversationId}',
+      );
       _channel = WebSocketChannel.connect(Uri.parse(wsUrl));
       _subscription = _channel!.stream.listen(
         (data) {
@@ -78,21 +102,28 @@ class _ChatScreenState extends State<ChatScreen> {
               ...decoded,
               'conversation': decoded['conversation'] ?? widget.conversationId,
             });
-          } catch (_) {
+          } catch (e) {
+            debugPrint('[ChatScreen] Ignoring malformed websocket message: $e');
             return;
           }
 
           if (!mounted) return;
+          debugPrint('[ChatScreen] Received websocket message id=${message.id}');
           _addMessage(message);
         },
-        onError: (_) {
+        onError: (error) {
+          debugPrint('[ChatScreen] Websocket error: $error');
           _channel = null;
         },
         onDone: () {
+          debugPrint('[ChatScreen] Websocket closed');
           _channel = null;
         },
       );
-    } catch (_) {}
+    } catch (e, stackTrace) {
+      debugPrint('[ChatScreen] Failed to connect websocket: $e');
+      debugPrintStack(stackTrace: stackTrace);
+    }
   }
 
   void _scrollToBottom() {
@@ -125,15 +156,23 @@ class _ChatScreenState extends State<ChatScreen> {
 
   Future<void> _sendMessageOverHttp(String text) async {
     try {
-      final json =
-          await context.appState.api.sendMessage(widget.conversationId, text);
+      debugPrint(
+        '[ChatScreen] Sending message conversationId=${widget.conversationId}',
+      );
+      final json = await context.appState.api.sendMessage(
+        widget.conversationId,
+        text,
+      );
+      debugPrint('[ChatScreen] Sent message response: $json');
       if (!mounted) return;
       _addMessage(ChatMessage.fromJson(json));
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('[ChatScreen] Failed to send message: $e');
+      debugPrintStack(stackTrace: stackTrace);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -159,32 +198,26 @@ class _ChatScreenState extends State<ChatScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _messages.isEmpty
-                    ? Center(
-                        child: Text(
-                          context.l10n.t('chat_start_hint'),
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                        itemCount: _messages.length,
-                        itemBuilder: (_, index) {
-                          final msg = _messages[index];
-                          final isMine = msg.sender == myId;
-                          return _MessageBubble(
-                            message: msg,
-                            isMine: isMine,
-                          );
-                        },
+                ? Center(
+                    child: Text(
+                      context.l10n.t('chat_start_hint'),
+                      style: theme.textTheme.bodyLarge?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
+                    ),
+                  )
+                : ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                    itemCount: _messages.length,
+                    itemBuilder: (_, index) {
+                      final msg = _messages[index];
+                      final isMine = msg.sender == myId;
+                      return _MessageBubble(message: msg, isMine: isMine);
+                    },
+                  ),
           ),
-          _InputBar(
-            controller: _controller,
-            onSend: _sendMessage,
-          ),
+          _InputBar(controller: _controller, onSend: _sendMessage),
         ],
       ),
     );
@@ -258,15 +291,16 @@ class _InputBar extends StatelessWidget {
                   hintText: context.l10n.t('chat_hint'),
                   border: InputBorder.none,
                   filled: false,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                 ),
               ),
             ),
             IconButton(
               onPressed: onSend,
-              icon: Icon(Icons.send_rounded,
-                  color: theme.colorScheme.primary),
+              icon: Icon(Icons.send_rounded, color: theme.colorScheme.primary),
             ),
           ],
         ),

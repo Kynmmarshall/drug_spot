@@ -29,48 +29,101 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
     setState(() => _openingChat = true);
 
     try {
+      debugPrint(
+        '[MedicineDetail] Starting chat with pharmacyUserId=$pharmacyUserId',
+      );
       final data = await context.appState.api.startConversation(pharmacyUserId);
+      debugPrint('[MedicineDetail] startConversation response: $data');
       if (!mounted) return;
-      final names =
-          (data['participant_names'] as List? ?? []).map((v) => '$v').toList();
-      final ids = (data['participant_ids'] as List? ?? [])
-          .map((v) => int.tryParse('$v'))
-          .whereType<int>()
-          .toList();
-      final myId = context.appState.api.userId ?? 0;
-      final myIdx = ids.indexOf(myId);
-      final otherIdx = myIdx == 0 ? 1 : 0;
-      final otherName = names.length > otherIdx
-          ? names[otherIdx]
-          : context.l10n.t('chat_title');
-      final conversationId = int.tryParse('${data['id']}');
-      if (conversationId == null) {
+      final names = _readStringList(data['participant_names']);
+      final ids = _readIntList(data['participant_ids']);
+      final myId = context.appState.api.userId;
+      debugPrint(
+        '[MedicineDetail] conversation ids=$ids names=$names myId=$myId',
+      );
+
+      final conversationId = _readInt(data['id']);
+      if (conversationId == 0) {
         throw ApiException('Could not open chat. Please try again.', 0);
       }
 
+      final otherName = _otherParticipantName(
+        participantIds: ids,
+        participantNames: names,
+        myUserId: myId,
+      );
+
+      debugPrint(
+        '[MedicineDetail] Opening ChatScreen conversationId=$conversationId '
+        'otherName=$otherName',
+      );
+
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => ChatScreen(
-            conversationId: conversationId,
-            otherName: otherName,
-          ),
+          builder: (_) =>
+              ChatScreen(conversationId: conversationId, otherName: otherName),
         ),
       );
     } on ApiException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
+      debugPrint(
+        '[MedicineDetail] Could not start chat: ${e.message} '
+        '(status ${e.statusCode})',
       );
-    } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.message)));
+    } catch (e, stackTrace) {
+      debugPrint('[MedicineDetail] Unexpected chat start error: $e');
+      debugPrintStack(stackTrace: stackTrace);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       if (mounted) {
         setState(() => _openingChat = false);
       }
     }
+  }
+
+  int _readInt(Object? value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value) ?? 0;
+    if (value is Map) return _readInt(value['id']);
+    return 0;
+  }
+
+  List<int> _readIntList(Object? value) {
+    if (value is! List) return const [];
+    return value.map(_readInt).where((id) => id != 0).toList();
+  }
+
+  List<String> _readStringList(Object? value) {
+    if (value is! List) return const [];
+    return value
+        .map((v) => '$v')
+        .where((v) => v.isNotEmpty)
+        .toList();
+  }
+
+  String _otherParticipantName({
+    required List<int> participantIds,
+    required List<String> participantNames,
+    required int? myUserId,
+  }) {
+    if (participantNames.isEmpty) return context.l10n.t('chat_title');
+    if (myUserId == null) return participantNames.first;
+
+    final myIdx = participantIds.indexOf(myUserId);
+    if (myIdx == -1) return participantNames.first;
+
+    final otherIdx = myIdx == 0 ? 1 : 0;
+    if (participantNames.length > otherIdx) {
+      return participantNames[otherIdx];
+    }
+    return participantNames.first;
   }
 
   @override
@@ -103,7 +156,8 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
                 const SizedBox(height: 12),
                 _InfoRow(
                   icon: Icons.phone_outlined,
-                  label: '${l10n.t('medicine_details_contact')}: '
+                  label:
+                      '${l10n.t('medicine_details_contact')}: '
                       '${widget.pharmacy.phone}',
                 ),
                 if (widget.pharmacy.userId != null) ...[

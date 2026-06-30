@@ -31,6 +31,7 @@ class UserProfile {
   final String userType;
 
   Map<String, dynamic> toJson() => {
+        'username': username,
         'email': email,
         'phone': phone,
         'bio': bio,

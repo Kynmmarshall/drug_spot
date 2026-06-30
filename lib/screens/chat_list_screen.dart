@@ -39,9 +39,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     }
   }
 
@@ -56,49 +56,56 @@ class _ChatListScreenState extends State<ChatListScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _conversations.isEmpty
-              ? Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.chat_bubble_outline_rounded,
-                            size: 64, color: theme.colorScheme.primary),
-                        const SizedBox(height: 16),
-                        Text(l10n.t('chat_empty'),
-                            style: theme.textTheme.titleMedium,
-                            textAlign: TextAlign.center),
-                      ],
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.chat_bubble_outline_rounded,
+                      size: 64,
+                      color: theme.colorScheme.primary,
                     ),
-                  ),
-                )
-              : RefreshIndicator(
-                  onRefresh: _load,
-                  child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 16),
-                    itemCount: _conversations.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (_, index) {
-                      final conv = _conversations[index];
-                      return _ConversationTile(
-                        conversation: conv,
-                        myUserId: myId,
-                        onTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => ChatScreen(
-                                conversationId: conv.id,
-                                otherName: conv.otherName(myId),
-                              ),
-                            ),
-                          );
-                          _load();
-                        },
-                      );
-                    },
-                  ),
+                    const SizedBox(height: 16),
+                    Text(
+                      l10n.t('chat_empty'),
+                      style: theme.textTheme.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
                 ),
+              ),
+            )
+          : RefreshIndicator(
+              onRefresh: _load,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                itemCount: _conversations.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (_, index) {
+                  final conv = _conversations[index];
+                  return _ConversationTile(
+                    conversation: conv,
+                    myUserId: myId,
+                    onTap: () async {
+                      await Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => ChatScreen(
+                            conversationId: conv.id,
+                            otherName: conv.otherName(myId),
+                          ),
+                        ),
+                      );
+                      _load();
+                    },
+                  );
+                },
+              ),
+            ),
     );
   }
 }
@@ -138,8 +145,7 @@ class _ConversationTile extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 24,
-              backgroundColor:
-                  theme.colorScheme.primary.withValues(alpha: 0.1),
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
               child: Text(
                 name.isNotEmpty ? name[0].toUpperCase() : '?',
                 style: TextStyle(
@@ -154,9 +160,12 @@ class _ConversationTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name,
-                      style: theme.textTheme.titleSmall
-                          ?.copyWith(fontWeight: FontWeight.w600)),
+                  Text(
+                    name,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                   if (lastMsg != null)
                     Text(
                       lastMsg.text,
@@ -171,8 +180,7 @@ class _ConversationTile extends StatelessWidget {
             ),
             if (hasUnread)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary,
                   borderRadius: BorderRadius.circular(12),
@@ -180,9 +188,10 @@ class _ConversationTile extends StatelessWidget {
                 child: Text(
                   '${conversation.unreadCount}',
                   style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700),
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
           ],

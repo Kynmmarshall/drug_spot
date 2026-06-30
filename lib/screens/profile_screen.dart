@@ -43,6 +43,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     'assets/avatars/avatar_coral.svg',
     'assets/avatars/avatar_mint.svg',
     'assets/avatars/avatar_sunrise.svg',
+    'assets/avatars/avatar_lagoon.svg',
+    'assets/avatars/avatar_plum.svg',
+    'assets/avatars/avatar_leaf.svg',
+    'assets/avatars/avatar_sky.svg',
+    'assets/avatars/avatar_rose.svg',
+    'assets/avatars/avatar_gold.svg',
+    'assets/avatars/avatar_indigo.svg',
+    'assets/avatars/avatar_lime.svg',
+    'assets/avatars/avatar_iris.svg',
+    'assets/avatars/avatar_marigold.svg',
+    'assets/avatars/avatar_pearl.svg',
+    'assets/avatars/avatar_orchid.svg',
+    'assets/avatars/avatar_aqua.svg',
+    'assets/avatars/avatar_berry.svg',
   ];
 
   bool get _isPharmacy => widget.userType == UserType.pharmacy;
@@ -57,10 +71,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _pharmacyNameController = TextEditingController();
     _pharmacyAddressController = TextEditingController();
     _pharmacyPhoneController = TextEditingController();
-    _fetchProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _fetchProfile();
+    });
   }
 
   Future<void> _fetchProfile() async {
+    debugPrint('[ProfileScreen] Loading ${widget.userType.name} profile');
     setState(() {
       _loading = true;
       _loadError = null;
@@ -69,17 +87,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final data = await context.appState.api.getProfile();
       final profile = UserProfile.fromJson(data);
+      debugPrint('[ProfileScreen] Loaded profile for ${profile.username}');
       _applyProfile(profile);
     } on ApiException catch (e) {
       if (!mounted) return;
+      debugPrint('[ProfileScreen] Profile API failed: ${e.message}');
       _applyProfile(
         _isPharmacy
             ? context.appState.pharmacyProfile
             : context.appState.patientProfile,
       );
       setState(() => _loadError = e.message);
-    } catch (_) {
+    } catch (e, stackTrace) {
       if (!mounted) return;
+      debugPrint('[ProfileScreen] Unexpected profile load error: $e');
+      debugPrintStack(stackTrace: stackTrace);
       _applyProfile(
         _isPharmacy
             ? context.appState.pharmacyProfile
@@ -203,18 +225,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 24),
                 TextField(
                   controller: _usernameController,
-                  readOnly: true,
                   decoration: InputDecoration(
                     labelText: l10n.t('input_username'),
                     helperText: l10n.t('profile_username_helper'),
-                    suffixIcon: const Icon(Icons.lock_outline, size: 18),
                   ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
                   controller: _emailController,
-                  decoration:
-                      InputDecoration(labelText: l10n.t('input_email')),
+                  readOnly: true,
+                  decoration: InputDecoration(
+                    labelText: l10n.t('input_email'),
+                    suffixIcon: const Icon(Icons.lock_outline, size: 18),
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -386,7 +409,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       // Save user profile
       final updated = _baseProfile.copyWith(
-        email: _emailController.text.trim(),
+        username: _usernameController.text.trim(),
+        email: _baseProfile.email,
         phone: _phoneController.text.trim(),
         bio: _bioController.text.trim(),
         avatarPath: _avatarPath,
@@ -436,44 +460,51 @@ class _AvatarPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: options.map((path) {
-        final isSelected = path == selectedPath;
-        return GestureDetector(
-          onTap: () => onSelect(path),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isSelected
-                    ? theme.colorScheme.primary
-                    : theme.dividerColor,
-                width: 2,
+    return SizedBox(
+      height: 76,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: options.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          final path = options[index];
+          final isSelected = path == selectedPath;
+          return GestureDetector(
+            onTap: () => onSelect(path),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 220),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : theme.dividerColor,
+                  width: 2,
+                ),
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.25,
+                          ),
+                          blurRadius: 16,
+                          spreadRadius: 1,
+                        ),
+                      ]
+                    : null,
               ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: theme.colorScheme.primary
-                            .withValues(alpha: 0.25),
-                        blurRadius: 16,
-                        spreadRadius: 1,
-                      ),
-                    ]
-                  : null,
+              child: ProfileAvatar(
+                path: path,
+                useAsset: true,
+                radius: 28,
+                backgroundColor: theme.colorScheme.surface,
+              ),
             ),
-            child: ProfileAvatar(
-              path: path,
-              useAsset: true,
-              radius: 28,
-              backgroundColor: theme.colorScheme.surface,
-            ),
-          ),
-        );
-      }).toList(),
+          );
+        },
+      ),
     );
   }
 }
