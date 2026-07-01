@@ -4,8 +4,7 @@ import '../core/context_extensions.dart';
 import '../models/geo_point.dart';
 import '../models/user_type.dart';
 import '../services/api_service.dart';
-import 'patient_dashboard_screen.dart';
-import 'pharmacy_setup_screen.dart';
+import 'verify_email_screen.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -281,7 +280,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     try {
       final appState = context.appState;
-      await appState.register(
+      final data = await appState.register(
         username: _usernameController.text.trim(),
         email: _emailController.text.trim(),
         phone: _phoneController.text.trim(),
@@ -291,15 +290,20 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
       if (!mounted) return;
 
-      final Widget destination;
-      if (appState.currentUserType == UserType.pharmacy) {
-        destination = const PharmacySetupScreen();
-      } else {
-        destination = const PatientDashboardScreen();
-      }
+      // The backend sends a verification OTP automatically on register.
+      // data['email_sent'] == true means an OTP was dispatched.
+      // data['user']['is_email_verified'] == false until they verify.
+      final maskedEmail = data['email_sent'] == true
+          ? _maskEmail(_emailController.text.trim())
+          : _emailController.text.trim();
 
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => destination),
+        MaterialPageRoute(
+          builder: (_) => VerifyEmailScreen(
+            maskedEmail: maskedEmail,
+            userType: _selectedType,
+          ),
+        ),
         (_) => false,
       );
     } on ApiException catch (e) {
@@ -310,5 +314,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
+  }
+
+  String _maskEmail(String email) {
+    final parts = email.split('@');
+    if (parts.length != 2) return email;
+    return '${parts[0][0]}***@${parts[1]}';
   }
 }

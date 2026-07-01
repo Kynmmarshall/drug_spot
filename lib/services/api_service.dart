@@ -26,8 +26,8 @@ class ApiService {
   String? _refreshToken;
 
   ApiService({String? baseUrl, http.Client? client})
-      : baseUrl = baseUrl ?? _defaultBaseUrl,
-        _client = client ?? http.Client();
+    : baseUrl = baseUrl ?? _defaultBaseUrl,
+      _client = client ?? http.Client();
 
   bool get hasToken => _accessToken != null;
 
@@ -46,9 +46,9 @@ class ApiService {
   }
 
   Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
-      };
+    'Content-Type': 'application/json',
+    if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
+  };
 
   // ── Token persistence ──
 
@@ -97,11 +97,12 @@ class ApiService {
 
     String message;
     if (body is Map) {
-      message = (body['error'] ??
-              body['detail'] ??
-              body.values.first?.toString() ??
-              'Request failed')
-          .toString();
+      message =
+          (body['error'] ??
+                  body['detail'] ??
+                  body.values.first?.toString() ??
+                  'Request failed')
+              .toString();
     } else {
       message = 'Request failed';
     }
@@ -157,7 +158,9 @@ class ApiService {
   }
 
   Future<http.Response> _authPost(Uri uri, {Object? body}) async {
-    var response = await _send(_client.post(uri, headers: _headers, body: body));
+    var response = await _send(
+      _client.post(uri, headers: _headers, body: body),
+    );
     if (response.statusCode == 401 && await _tryRefresh()) {
       response = await _send(_client.post(uri, headers: _headers, body: body));
     }
@@ -323,8 +326,9 @@ class ApiService {
   }
 
   Future<List<dynamic>> getMedicinesByPharmacy(int pharmacyId) async {
-    final response =
-        await _authGet(Uri.parse('$baseUrl/api/medicines/pharmacy/$pharmacyId'));
+    final response = await _authGet(
+      Uri.parse('$baseUrl/api/medicines/pharmacy/$pharmacyId'),
+    );
     return _parseJsonList(response);
   }
 
@@ -352,8 +356,9 @@ class ApiService {
   // ── Medicine Requests ──
 
   Future<List<dynamic>> getMedicineRequests() async {
-    final response =
-        await _authGet(Uri.parse('$baseUrl/api/medicine_requests/'));
+    final response = await _authGet(
+      Uri.parse('$baseUrl/api/medicine_requests/'),
+    );
     return _parseJsonList(response);
   }
 
@@ -380,8 +385,7 @@ class ApiService {
   // ── Conversations ──
 
   Future<List<dynamic>> getConversations() async {
-    final response =
-        await _authGet(Uri.parse('$baseUrl/api/conversations/'));
+    final response = await _authGet(Uri.parse('$baseUrl/api/conversations/'));
     return _parseJsonList(response);
   }
 
@@ -428,16 +432,38 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getNotificationPreferences() async {
-    final response =
-        await _authGet(Uri.parse('$baseUrl/api/notifications/preferences'));
+    final response = await _authGet(
+      Uri.parse('$baseUrl/api/notifications/preferences'),
+    );
     return _parseJson(response);
   }
 
   Future<Map<String, dynamic>> updateNotificationPreferences(
-      Map<String, dynamic> data) async {
+    Map<String, dynamic> data,
+  ) async {
     final response = await _authPut(
       Uri.parse('$baseUrl/api/notifications/preferences'),
       body: jsonEncode(data),
+    );
+    return _parseJson(response);
+  }
+
+  // ── Email Verification ──
+
+  /// Triggers the backend to (re)send a 6-digit verification code to the
+  /// currently authenticated user's email address.
+  Future<void> sendVerificationEmail() async {
+    final response = await _authPost(Uri.parse('$baseUrl/api/verify/send'));
+    _parseJson(response);
+  }
+
+  /// Submits the 6-digit OTP entered by the user. On success the backend
+  /// typically marks the account as verified and may return updated user
+  /// data, so we return the parsed JSON map in case the caller wants it.
+  Future<Map<String, dynamic>> verifyEmail(String otp) async {
+    final response = await _authPost(
+      Uri.parse('$baseUrl/api/verify/confirm'),
+      body: jsonEncode({'otp': otp}),
     );
     return _parseJson(response);
   }
