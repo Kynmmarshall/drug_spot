@@ -123,7 +123,13 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
     }).toList();
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.t('patient_dashboard_title'))),
+      appBar: AppBar(
+        leading: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Image.asset('assets/logo.png'),
+        ),
+        title: Text(l10n.t('patient_dashboard_title')),
+      ),
       body: _buildBody(appState, l10n, theme, medicines),
       bottomNavigationBar: DashboardActionBar(
         children: [

@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../widgets/medicine_form_sheet.dart';
+
 import '../models/app_language.dart';
 import '../models/geo_point.dart';
 import '../models/medicine.dart';
@@ -61,7 +63,7 @@ class AppState extends ChangeNotifier {
 
   // ── UI-only state ──
 
-  ThemeMode _themeMode = ThemeMode.light;
+  ThemeMode _themeMode = ThemeMode.system;
   AppLanguage _language = AppLanguage.en;
   UserType _loginType = UserType.patient;
 
@@ -73,7 +75,7 @@ class AppState extends ChangeNotifier {
 
   void toggleTheme() {
     _themeMode =
-        _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+        _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
     notifyListeners();
   }
 
@@ -120,9 +122,21 @@ class AppState extends ChangeNotifier {
   String get primaryPharmacyId => _primaryPharmacyId ?? '';
   bool get hasPharmacy => _primaryPharmacyId != null;
 
-  Pharmacy get primaryPharmacy => _pharmacies[_primaryPharmacyId]!;
+  static const _unknownPharmacy = Pharmacy(
+    id: '',
+    name: '—',
+    address: '—',
+    lat: 0,
+    lng: 0,
+    phone: '—',
+    accent: Color(0xFF38BDF8),
+  );
 
-  Pharmacy pharmacyById(String id) => _pharmacies[id]!;
+  Pharmacy get primaryPharmacy =>
+      (_primaryPharmacyId != null ? _pharmacies[_primaryPharmacyId] : null) ??
+      _unknownPharmacy;
+
+  Pharmacy pharmacyById(String id) => _pharmacies[id] ?? _unknownPharmacy;
 
   List<Pharmacy> get pharmacies => _pharmacies.values.toList(growable: false);
 
@@ -284,16 +298,9 @@ class AppState extends ChangeNotifier {
 
     try {
       await loadPharmacies();
+      _resolvePharmacyOwnership();
       await loadMedicines();
       await loadMedicineRequests();
-
-      if (_currentUserType == UserType.pharmacy) {
-        final userId = _api.userId;
-        _primaryPharmacyId = _pharmacies.values
-            .where((p) => p.userId == userId)
-            .map((p) => p.id)
-            .firstOrNull;
-      }
     } on ApiException catch (e) {
       _dataError = e.message;
     } catch (e) {
@@ -304,6 +311,16 @@ class AppState extends ChangeNotifier {
     }
   }
 
+  void _resolvePharmacyOwnership() {
+    if (_currentUserType != UserType.pharmacy) return;
+    final userId = _api.userId;
+    if (userId == null) return;
+    _primaryPharmacyId = _pharmacies.values
+        .where((p) => p.userId == userId)
+        .map((p) => p.id)
+        .firstOrNull;
+  }
+
   Future<void> refreshData() async {
     _dataLoading = true;
     _dataError = null;
@@ -311,6 +328,7 @@ class AppState extends ChangeNotifier {
 
     try {
       await loadPharmacies();
+      _resolvePharmacyOwnership();
       await loadMedicines();
       await loadMedicineRequests();
     } on ApiException catch (e) {
@@ -402,41 +420,69 @@ class AppState extends ChangeNotifier {
 
   // ── Medicine CRUD (optimistic with rollback) ──
 
-  Future<void> addMedicine(Medicine medicine) async {
-    _medicines.add(medicine);
+  Future<void> addMedicine(MedicineFormData data) async {
+    final tempId = 'tmp-${DateTime.now().millisecondsSinceEpoch}';
+    final temp = Medicine(
+      id: tempId,
+      name: data.name,
+      price: data.price,
+      description: data.description,
+      pharmacyId: primaryPharmacyId,
+      distanceKm: 0,
+    );
+    _medicines.add(temp);
     notifyListeners();
 
     try {
-      final json = await _api.addMedicine(medicine.name, medicine.price);
+      final json = await _api.addMedicine(
+        name: data.name,
+        price: data.price,
+        description: data.description,
+        imagePath: data.imageFile?.path,
+      );
       final pharmacyId = json['pharmacy_id'].toString();
       final distance = _pharmacies.containsKey(pharmacyId)
           ? distanceFromPatient(pharmacyId)
           : 0.0;
-      final serverMedicine = Medicine.fromJson(json,
-          distanceKm: double.parse(distance.toStringAsFixed(1)));
-      final index = _medicines.indexWhere((m) => m.id == medicine.id);
-      if (index != -1) {
-        _medicines[index] = serverMedicine;
-      }
+      final serverMedicine = Medicine.fromJson(
+        json,
+        distanceKm: double.parse(distance.toStringAsFixed(1)),
+      );
+      final index = _medicines.indexWhere((m) => m.id == tempId);
+      if (index != -1) _medicines[index] = serverMedicine;
       notifyListeners();
     } catch (_) {
-      _medicines.removeWhere((m) => m.id == medicine.id);
+      _medicines.removeWhere((m) => m.id == tempId);
       notifyListeners();
       rethrow;
     }
   }
 
-  Future<void> updateMedicine(Medicine medicine) async {
-    final index = _medicines.indexWhere((m) => m.id == medicine.id);
+  Future<void> updateMedicine(Medicine existing, MedicineFormData data) async {
+    final index = _medicines.indexWhere((m) => m.id == existing.id);
     if (index == -1) return;
 
     final previous = _medicines[index];
-    _medicines[index] = medicine;
+    _medicines[index] = existing.copyWith(
+      name: data.name,
+      price: data.price,
+      description: data.description,
+    );
     notifyListeners();
 
     try {
-      await _api.updateMedicine(
-          int.parse(medicine.id), medicine.name, medicine.price);
+      final json = await _api.updateMedicine(
+        int.parse(existing.id),
+        name: data.name,
+        price: data.price,
+        description: data.description,
+        imagePath: data.imageFile?.path,
+      );
+      _medicines[index] = Medicine.fromJson(
+        json,
+        distanceKm: previous.distanceKm,
+      );
+      notifyListeners();
     } catch (_) {
       _medicines[index] = previous;
       notifyListeners();

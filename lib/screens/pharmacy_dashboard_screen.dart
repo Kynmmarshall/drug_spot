@@ -24,9 +24,16 @@ class PharmacyDashboardScreen extends StatelessWidget {
     final appState = context.appState;
     final l10n = context.l10n;
     final owned = appState.medicinesByPharmacy(appState.primaryPharmacyId);
+    final requestCount = appState.medicineRequests.length;
 
     return Scaffold(
-      appBar: AppBar(title: Text(l10n.t('pharmacy_dashboard_title'))),
+      appBar: AppBar(
+        leading: Padding(
+          padding: const EdgeInsets.all(10),
+          child: Image.asset('assets/logo.png'),
+        ),
+        title: Text(l10n.t('pharmacy_dashboard_title')),
+      ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _openMedicineSheet(context),
         icon: const Icon(Icons.add),
@@ -38,6 +45,7 @@ class PharmacyDashboardScreen extends StatelessWidget {
           const SizedBox(height: 8),
           _DashboardStats(
             ownedMedicines: owned,
+            requestCount: requestCount,
             onOpenRequests: () => _openRequestsScreen(context),
             onOpenManagedMeds: () => _openMyMedicinesScreen(context),
           ),
@@ -102,6 +110,12 @@ class PharmacyDashboardScreen extends StatelessWidget {
   Future<void> _openMedicineSheet(BuildContext context, {Medicine? medicine}) {
     final appState = context.appState;
     final l10n = context.l10n;
+    if (!appState.hasPharmacy) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(l10n.t('pharmacy_setup_submit'))),
+      );
+      return Future.value();
+    }
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -113,16 +127,16 @@ class PharmacyDashboardScreen extends StatelessWidget {
           child: MedicineFormSheet(
             pharmacy: appState.primaryPharmacy,
             medicine: medicine,
-            onSubmit: (value) async {
+            onSubmit: (data) async {
               try {
                 if (medicine == null) {
-                  await appState.addMedicine(value);
+                  await appState.addMedicine(data);
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(l10n.t('med_created'))),
                   );
                 } else {
-                  await appState.updateMedicine(value);
+                  await appState.updateMedicine(medicine, data);
                   if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(l10n.t('med_updated'))),
@@ -183,11 +197,13 @@ class PharmacyDashboardScreen extends StatelessWidget {
 class _DashboardStats extends StatelessWidget {
   const _DashboardStats({
     required this.ownedMedicines,
+    required this.requestCount,
     required this.onOpenRequests,
     required this.onOpenManagedMeds,
   });
 
   final List<Medicine> ownedMedicines;
+  final int requestCount;
   final VoidCallback onOpenRequests;
   final VoidCallback onOpenManagedMeds;
 
@@ -207,7 +223,7 @@ class _DashboardStats extends StatelessWidget {
       ),
       _StatTile(
         icon: Icons.message_rounded,
-        value: '24',
+        value: requestCount.toString().padLeft(2, '0'),
         label: l10n.t('stats_requests'),
         helper: l10n.t('stats_requests_sub'),
         gradient: const LinearGradient(

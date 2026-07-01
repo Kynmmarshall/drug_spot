@@ -39,14 +39,19 @@ class MedicineTile extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: pharmacy.accent.withValues(alpha: 0.18),
-                ),
-                child: Icon(Icons.medication_liquid, color: pharmacy.accent),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: medicine.imageUrl != null
+                    ? Image.network(
+                        medicine.imageUrl!,
+                        width: 54,
+                        height: 54,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _MedicinePlaceholder(
+                          accent: pharmacy.accent,
+                        ),
+                      )
+                    : _MedicinePlaceholder(accent: pharmacy.accent),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -104,6 +109,21 @@ class MedicineTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MedicinePlaceholder extends StatelessWidget {
+  const _MedicinePlaceholder({required this.accent});
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 54,
+      height: 54,
+      color: accent.withValues(alpha: 0.18),
+      child: Icon(Icons.medication_liquid, color: accent),
     );
   }
 }

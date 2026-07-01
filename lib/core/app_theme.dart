@@ -8,9 +8,6 @@ class AppTheme {
 
   static ThemeData _themeFor(Brightness brightness) {
     final isLight = brightness == Brightness.light;
-    final background = isLight
-        ? const Color(0xFFF4F6FB)
-        : const Color(0xFF050B18);
     final surface = isLight ? Colors.white : const Color(0xFF0F172A);
 
     final colorScheme = ColorScheme.fromSeed(
@@ -23,14 +20,18 @@ class AppTheme {
       displayColor: isLight ? const Color(0xFF0F172A) : Colors.white,
     );
 
+    final appBarOverlay = isLight
+        ? const Color(0xD8F4F6FB)  // 85 % opaque — keeps title readable
+        : const Color(0xD8050B18);
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       brightness: brightness,
-      scaffoldBackgroundColor: background,
+      scaffoldBackgroundColor: Colors.transparent,
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: background,
+        backgroundColor: appBarOverlay,
         foregroundColor: colorScheme.onSurface,
         elevation: 0,
       ),

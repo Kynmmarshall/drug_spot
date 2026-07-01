@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../core/context_extensions.dart';
 import '../models/user_type.dart';
 import '../services/api_service.dart';
+import '../widgets/lang_toggle.dart';
 import 'patient_dashboard_screen.dart';
 import 'pharmacy_dashboard_screen.dart';
 import 'registration_screen.dart';
@@ -34,6 +35,12 @@ class _LoginScreenState extends State<LoginScreen> {
     final l10n = context.l10n;
 
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        actions: [const LangToggle()],
+      ),
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -141,8 +148,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 32),
-                const _LoginShowcase(),
               ],
             ),
           ),
@@ -192,73 +197,3 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-class _LoginShowcase extends StatelessWidget {
-  const _LoginShowcase();
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.map_rounded, color: theme.colorScheme.primary),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Realtime map layers',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: const [
-                _FeatureChip(label: 'Community map'),
-                _FeatureChip(label: 'Bilingual alerts'),
-                _FeatureChip(label: 'Price transparency'),
-                _FeatureChip(label: 'Geo filters'),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _FeatureChip extends StatelessWidget {
-  const _FeatureChip({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.check_rounded, size: 16, color: theme.colorScheme.primary),
-          const SizedBox(width: 6),
-          Text(label, style: theme.textTheme.labelLarge),
-        ],
-      ),
-    );
-  }
-}

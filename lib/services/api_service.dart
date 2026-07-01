@@ -39,7 +39,11 @@ class ApiService {
       final normalized = base64Url.normalize(parts[1]);
       final payload = utf8.decode(base64Url.decode(normalized));
       final map = jsonDecode(payload) as Map<String, dynamic>;
-      return map['user_id'] as int?;
+      final raw = map['user_id'];
+      if (raw is int) return raw;
+      if (raw is num) return raw.toInt();
+      if (raw is String) return int.tryParse(raw);
+      return null;
     } catch (_) {
       return null;
     }
@@ -328,20 +332,97 @@ class ApiService {
     return _parseJsonList(response);
   }
 
-  Future<Map<String, dynamic>> addMedicine(String name, double price) async {
+  Future<Map<String, dynamic>> addMedicine({
+    required String name,
+    required double price,
+    required String description,
+    String? imagePath,
+  }) async {
+    if (imagePath != null) {
+      return _multipartPost(
+        Uri.parse('$baseUrl/api/medicines/'),
+        fields: {
+          'name': name,
+          'price': price.toString(),
+          'description': description,
+        },
+        fileField: 'image',
+        filePath: imagePath,
+      );
+    }
     final response = await _authPost(
       Uri.parse('$baseUrl/api/medicines/'),
-      body: jsonEncode({'name': name, 'price': price}),
+      body: jsonEncode({
+        'name': name,
+        'price': price,
+        'description': description,
+      }),
     );
     return _parseJson(response);
   }
 
-  Future<void> updateMedicine(int id, String name, double price) async {
+  Future<Map<String, dynamic>> updateMedicine(
+    int id, {
+    required String name,
+    required double price,
+    required String description,
+    String? imagePath,
+  }) async {
+    if (imagePath != null) {
+      return _multipartPut(
+        Uri.parse('$baseUrl/api/medicines/$id'),
+        fields: {
+          'name': name,
+          'price': price.toString(),
+          'description': description,
+        },
+        fileField: 'image',
+        filePath: imagePath,
+      );
+    }
     final response = await _authPut(
       Uri.parse('$baseUrl/api/medicines/$id'),
-      body: jsonEncode({'name': name, 'price': price}),
+      body: jsonEncode({
+        'name': name,
+        'price': price,
+        'description': description,
+      }),
     );
-    _parseJson(response);
+    return _parseJson(response);
+  }
+
+  Future<Map<String, dynamic>> _multipartPost(
+    Uri uri, {
+    required Map<String, String> fields,
+    required String fileField,
+    required String filePath,
+  }) async {
+    final request = http.MultipartRequest('POST', uri);
+    if (_accessToken != null) {
+      request.headers['Authorization'] = 'Bearer $_accessToken';
+    }
+    request.fields.addAll(fields);
+    request.files.add(await http.MultipartFile.fromPath(fileField, filePath));
+    final streamed = await request.send().timeout(_requestTimeout);
+    final response = await http.Response.fromStream(streamed);
+    return _parseJson(response);
+  }
+
+  Future<Map<String, dynamic>> _multipartPut(
+    Uri uri, {
+    required Map<String, String> fields,
+    required String fileField,
+    required String filePath,
+  }) async {
+    final request = http.MultipartRequest('PUT', uri);
+    if (_accessToken != null) {
+      request.headers['Authorization'] = 'Bearer $_accessToken';
+    }
+    request.fields.addAll(fields);
+    request.files.add(await http.MultipartFile.fromPath(fileField, filePath));
+    final streamed = await request.send().timeout(_requestTimeout);
+    final response = await http.Response.fromStream(streamed);
+    return _parseJson(response);
   }
 
   Future<void> deleteMedicine(int id) async {

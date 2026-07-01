@@ -3,6 +3,7 @@ class Conversation {
     required this.id,
     required this.participantIds,
     required this.participantNames,
+    required this.participantOnline,
     this.lastMessage,
     this.unreadCount = 0,
     required this.updatedAt,
@@ -14,6 +15,7 @@ class Conversation {
       id: _readInt(json['id']),
       participantIds: _readIntList(json['participant_ids']),
       participantNames: _readStringList(json['participant_names']),
+      participantOnline: _readBoolList(json['participant_online']),
       lastMessage: lastMsg is Map<String, dynamic>
           ? LastMessage.fromJson(lastMsg)
           : null,
@@ -25,6 +27,7 @@ class Conversation {
   final int id;
   final List<int> participantIds;
   final List<String> participantNames;
+  final List<bool> participantOnline;
   final LastMessage? lastMessage;
   final int unreadCount;
   final String updatedAt;
@@ -35,6 +38,13 @@ class Conversation {
       return participantNames.firstOrNull ?? 'Unknown';
     }
     return participantNames[idx == 0 ? 1 : 0];
+  }
+
+  bool isOtherOnline(int myUserId) {
+    final idx = participantIds.indexOf(myUserId);
+    if (idx == -1 || participantOnline.length < 2) return false;
+    final otherIdx = idx == 0 ? 1 : 0;
+    return otherIdx < participantOnline.length && participantOnline[otherIdx];
   }
 
   static int _readInt(Object? value) {
@@ -59,6 +69,11 @@ class Conversation {
       }
       return item.toString();
     }).toList();
+  }
+
+  static List<bool> _readBoolList(Object? value) {
+    if (value is! List) return const [];
+    return value.map((v) => v == true).toList();
   }
 }
 

@@ -98,16 +98,16 @@ class MyMedicinesScreen extends StatelessWidget {
         child: MedicineFormSheet(
           pharmacy: appState.primaryPharmacy,
           medicine: medicine,
-          onSubmit: (value) async {
+          onSubmit: (data) async {
             try {
               if (medicine == null) {
-                await appState.addMedicine(value);
+                await appState.addMedicine(data);
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(l10n.t('med_created'))),
                 );
               } else {
-                await appState.updateMedicine(value);
+                await appState.updateMedicine(medicine, data);
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(l10n.t('med_updated'))),

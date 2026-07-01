@@ -88,6 +88,23 @@ class _DrugSpotAppState extends State<DrugSpotApp> {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
+            builder: (context, child) {
+              final isDark =
+                  Theme.of(context).brightness == Brightness.dark;
+              return DecoratedBox(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: AssetImage(
+                      isDark
+                          ? 'assets/background/dark.png'
+                          : 'assets/background/light.png',
+                    ),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: child!,
+              );
+            },
             home: _buildHome(),
           ),
         );

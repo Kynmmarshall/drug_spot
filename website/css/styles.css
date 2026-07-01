@@ -402,6 +402,7 @@ nav.scrolled { box-shadow: 0 4px 30px rgba(79, 70, 229, 0.08); }
   transition: transform 0.35s;
 }
 .screenshot-item:hover { transform: scale(1.04); }
+.screenshot-item img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .ss-title { color: #fff; font-weight: 700; font-size: 0.95rem; margin-bottom: 6px; }
 .ss-sub { color: rgba(255,255,255,0.5); font-size: 0.8rem; margin-bottom: 16px; }
 .ss-content { flex: 1; display: flex; flex-direction: column; gap: 8px; }

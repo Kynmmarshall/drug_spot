@@ -136,6 +136,19 @@ class _MedicineDetailScreenState extends State<MedicineDetailScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 40),
         children: [
+          if (widget.medicine.imageUrl != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Image.network(
+                  widget.medicine.imageUrl!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          if (widget.medicine.imageUrl != null) const SizedBox(height: 16),
           _HeroCard(
             medicine: widget.medicine,
             pharmacy: widget.pharmacy,
@@ -244,12 +257,21 @@ class _HeroCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Text(
-            l10n.t('medicine_details_overview'),
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: Colors.white.withValues(alpha: 0.9),
+          if (medicine.description.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              medicine.description,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
             ),
-          ),
+          ] else
+            Text(
+              l10n.t('medicine_details_overview'),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: Colors.white.withValues(alpha: 0.9),
+              ),
+            ),
           const SizedBox(height: 24),
           Row(
             children: [
