@@ -93,16 +93,13 @@ class _MedicineFormSheetState extends State<MedicineFormSheet> {
     final existingImageUrl = widget.medicine?.imageUrl;
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(
-        24,
-        32,
-        24,
-        MediaQuery.of(context).viewInsets.bottom + 32,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      padding: EdgeInsets.fromLTRB(24, 32, 24, MediaQuery.of(context).viewInsets.bottom + 32),
+      child: SingleChildScrollView(
+        physics: const ClampingScrollPhysics(),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           // ── Header ──
           Text(
             widget.medicine == null
@@ -184,6 +181,8 @@ class _MedicineFormSheetState extends State<MedicineFormSheet> {
               children: [
                 TextFormField(
                   controller: _nameCtrl,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
                   decoration: InputDecoration(
                     labelText: l10n.t('medicine_name'),
                     prefixIcon: const Icon(Icons.medication_outlined),
@@ -196,6 +195,8 @@ class _MedicineFormSheetState extends State<MedicineFormSheet> {
                 TextFormField(
                   controller: _priceCtrl,
                   keyboardType: TextInputType.number,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) => FocusScope.of(context).nextFocus(),
                   decoration: InputDecoration(
                     labelText: l10n.t('medicine_price'),
                     prefixIcon: const Icon(Icons.payments_outlined),
@@ -209,6 +210,7 @@ class _MedicineFormSheetState extends State<MedicineFormSheet> {
                 TextFormField(
                   controller: _descCtrl,
                   maxLines: 3,
+                  textInputAction: TextInputAction.done,
                   decoration: InputDecoration(
                     labelText: l10n.t('medicine_description'),
                     prefixIcon: const Padding(
@@ -241,7 +243,8 @@ class _MedicineFormSheetState extends State<MedicineFormSheet> {
               ),
             ],
           ),
-        ],
+          ],
+        ),
       ),
     );
   }

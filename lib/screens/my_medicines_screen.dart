@@ -91,36 +91,31 @@ class MyMedicinesScreen extends StatelessWidget {
     return showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: MedicineFormSheet(
-          pharmacy: appState.primaryPharmacy,
-          medicine: medicine,
-          onSubmit: (data) async {
-            try {
-              if (medicine == null) {
-                await appState.addMedicine(data);
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.t('med_created'))),
-                );
-              } else {
-                await appState.updateMedicine(medicine, data);
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.t('med_updated'))),
-                );
-              }
-            } catch (e) {
+      builder: (_) => MedicineFormSheet(
+        pharmacy: appState.primaryPharmacy,
+        medicine: medicine,
+        onSubmit: (data) async {
+          try {
+            if (medicine == null) {
+              await appState.addMedicine(data);
               if (!context.mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(e.toString())),
+                SnackBar(content: Text(l10n.t('med_created'))),
+              );
+            } else {
+              await appState.updateMedicine(medicine, data);
+              if (!context.mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.t('med_updated'))),
               );
             }
-          },
-        ),
+          } catch (e) {
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(e.toString())),
+            );
+          }
+        },
       ),
     );
   }
